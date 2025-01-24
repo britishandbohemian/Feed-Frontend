@@ -29,7 +29,6 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // POST to your login endpoint
       const response = await fetch(apiRoutes.auth.login, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -41,7 +40,6 @@ const Login = () => {
 
       const data = await response.json();
       if (data.success) {
-        // Store tokens in localStorage
         localStorage.setItem('token', data.data.token);
         localStorage.setItem('refreshToken', data.data.refreshToken);
 
@@ -51,15 +49,30 @@ const Login = () => {
           localStorage.removeItem('rememberedEmail');
         }
 
-        // Example user info from the response:
         const userInfo = data.data.user;
-        // Update context with user info
         setUserInfo(userInfo);
 
-        // Navigate to Home
         navigate('/home');
       } else {
-        setError(data.message || 'Login failed. Please try again.');
+        // Check for email verification error
+        if (data.errorCode === 'EMAIL_NOT_VERIFIED') {
+          setError(
+              <div>
+                {data.message}
+                <button
+                    onClick={() => {
+                      sessionStorage.setItem('verificationEmail', formData.email);
+                      navigate('/verify-otp');
+                    }}
+                    className="ml-2 text-blue-600 underline"
+                >
+                  Verify Email
+                </button>
+              </div>
+          );
+        } else {
+          setError(data.message || 'Login failed. Please try again.');
+        }
       }
     } catch (err) {
       setError('Unable to connect to the server. Please try again later.');
