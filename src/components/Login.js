@@ -1,8 +1,8 @@
-// Login.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useUser } from '../context/UserContext.js';
+import apiRoutes from "../services/apiRoutes";
 
 const Login = () => {
   const { setUserInfo } = useUser();
@@ -15,6 +15,13 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const errorRef = useRef(null);
+
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [error]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +30,7 @@ const Login = () => {
 
     try {
       // POST to your login endpoint
-      const response = await fetch('http://localhost:5000/api/users/login', {
+      const response = await fetch(apiRoutes.auth.login, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -75,6 +82,13 @@ const Login = () => {
 
   return (
       <div className="min-h-screen flex flex-col items-center px-4 py-8 bg-gray-100 font-['Poppins']">
+        {/* Loading Bar */}
+        {isLoading && (
+            <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50">
+              <div className="h-full bg-black animate-loading-bar"></div>
+            </div>
+        )}
+
         <div className="w-full max-w-md">
           <div className="text-center mb-4">
             <h1 className="font-['Milonga'] text-3xl mb-2">feed</h1>
@@ -82,7 +96,11 @@ const Login = () => {
           </div>
 
           {error && (
-              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200" role="alert">
+              <div
+                  ref={errorRef}
+                  className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200"
+                  role="alert"
+              >
                 {error}
               </div>
           )}

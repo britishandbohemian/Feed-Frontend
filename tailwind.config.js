@@ -4,7 +4,17 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      keyframes: {
+        'loading-bar': {
+          '0%': { width: '0%' },
+          '100%': { width: '100%' }
+        }
+      },
+      animation: {
+        'loading-bar': 'loading-bar 2s linear'
+      }
+    },
   },
   plugins: [],
   styles: {
@@ -15,4 +25,4 @@ module.exports = {
       }
     }
   }
-}// In your CSS or Tailwind config, you might want to add these custom styles:
+}

@@ -1,27 +1,16 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React, { useContext } from 'react';
+import { Navigate } from 'react-router-dom';
+import { UserContext } from '../context/UserContext';
 
-const ProtectedRoute = ({ children, bypassRoutes = [] }) => {
-  const { user, loading } = useAuth(); // Get authentication state from context
-  const location = useLocation(); // Get current location
+const ProtectedRoute = ({ children }) => {
+  const { user } = useContext(UserContext); // Assuming the UserContext holds the current user's state
 
-  // Show loading screen while authentication state is being checked
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  // Allow access to bypass routes (e.g., login, signup, verify-otp)
-  if (bypassRoutes.includes(location.pathname)) {
-    return children;
-  }
-
-  // If user is not authenticated, redirect to login page
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} />;
+    // If the user is not authenticated, redirect to login
+    return <Navigate to="/login" replace />;
   }
 
-  // If authenticated, allow access to the route
+  // If authenticated, render the child component
   return children;
 };
 
