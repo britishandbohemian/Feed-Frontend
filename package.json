@@ -14,7 +14,6 @@
     "react-router-dom": "^6.28.2",
     "react-scripts": "5.0.1"
   },
-  "homepage": "https://britishandbohemian.github.io/Feed-Front/",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
