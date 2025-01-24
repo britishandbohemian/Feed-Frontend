@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import StepGenerator from './StepGenerator'
 import {
-  ArrowLeft, Edit2, Check, Brain, Plus,
+   Check, Brain, Plus,
   Calendar, ChevronLeft, ChevronRight, X, Save,
   ArrowUp, ArrowDown, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 
 
