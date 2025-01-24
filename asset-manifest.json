@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/britishandbohemian/Feed-Front/static/css/main.8a995859.css",
+    "main.js": "/britishandbohemian/Feed-Front/static/js/main.e82d3d72.js",
+    "index.html": "/britishandbohemian/Feed-Front/index.html",
+    "main.8a995859.css.map": "/britishandbohemian/Feed-Front/static/css/main.8a995859.css.map",
+    "main.e82d3d72.js.map": "/britishandbohemian/Feed-Front/static/js/main.e82d3d72.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.8a995859.css",
+    "static/js/main.e82d3d72.js"
+  ]
+}
