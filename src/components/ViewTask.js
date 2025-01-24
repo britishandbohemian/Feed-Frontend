@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Pencil, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import {  useNavigate } from 'react-router-dom';
 
 const ViewTask = () => {
   const navigate = useNavigate();
