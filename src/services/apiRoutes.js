@@ -10,6 +10,7 @@ const apiRoutes = {
         resendOtp: `${API_BASE_URL}/users/auth/resend-otp`,
         requestPasswordReset: `${API_BASE_URL}/users/auth/request-password-reset`,
         resetPassword: `${API_BASE_URL}/users/auth/reset-password`,
+        googleLogin: `${API_BASE_URL}/users/auth/google-login`, // Add this line
     },
 
     // User Management Routes
