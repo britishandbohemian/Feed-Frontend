@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.API_BASE_URL || "https://feedapi.vercel.app/api";
+const API_BASE_URL = "https://feedapi.vercel.app/api";
 
 const apiRoutes = {
     // Authentication Routes
