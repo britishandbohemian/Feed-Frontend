@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://feedapi.vercel.app/api";
+const API_BASE_URL = "https://feed-api.vercel.app/api";
 
 const apiRoutes = {
     // Authentication Routes
