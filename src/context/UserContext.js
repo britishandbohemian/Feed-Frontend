@@ -8,35 +8,41 @@ export const useUser = () => {
 };
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Stores user information
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Tracks authentication status
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Sets user info and marks as authenticated
   const setUserInfo = (userInfo) => {
     setUser(userInfo);
     setIsAuthenticated(true);
-    // Optionally save to localStorage for persistence
     localStorage.setItem('user', JSON.stringify(userInfo));
   };
 
-  // Clears user info on logout
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('user'); // Clear user from localStorage
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
-  // Checks if the user is already logged in by looking at localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    const storedToken = localStorage.getItem('token');
+    
+    if (storedUser && storedToken) {
       setUser(JSON.parse(storedUser));
       setIsAuthenticated(true);
+    } else {
+      logout();
     }
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUserInfo, isAuthenticated, logout }}>
+    <UserContext.Provider value={{ 
+      user, 
+      setUserInfo, 
+      isAuthenticated, 
+      logout 
+    }}>
       {children}
     </UserContext.Provider>
   );

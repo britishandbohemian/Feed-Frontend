@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail } from 'lucide-react';
+import { useUser } from '../context/UserContext';
+import { verifyOtp, resendOtp } from '../services/authService';
 
 const VerifyOTP = () => {
   const navigate = useNavigate();
+  const { setUser } = useUser();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendError, setResendError] = useState('');
+  const [resendSuccess, setResendSuccess] = useState('');
 
   useEffect(() => {
-    const verificationEmail = sessionStorage.getItem('verificationEmail');
+    const verificationEmail = sessionStorage.getItem('pendingVerificationEmail');
     if (!verificationEmail) {
       navigate('/signup');
       return;
@@ -31,29 +37,45 @@ const VerifyOTP = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/users/verify-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          otp: otpString,
-        }),
-      });
-
-      const data = await response.json();
+      const { data } = await verifyOtp({ email, otp: otpString });
 
       if (data.success) {
-        sessionStorage.removeItem('verificationEmail');
-        navigate('/');
-      } else {
-        setError(data.message || 'Invalid OTP. Please try again.');
+        localStorage.setItem('token', data.token);
+        setUser({
+          isAuthenticated: true,
+          userData: data.user
+        });
+        
+        setResendSuccess('Verification successful! Redirecting...');
+        sessionStorage.removeItem('pendingVerificationEmail');
+
+        setTimeout(() => {
+          navigate('/home');
+        }, 1500);
       }
-    } catch (err) {
-      setError('Unable to connect to the server. Please try again later.');
+    } catch (error) {
+      setError(error.message || 'Invalid OTP. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setResendError('');
+    setResendSuccess('');
+    setResendLoading(true);
+
+    try {
+      const { data } = await resendOtp(email);
+      
+      if (data.success) {
+        setResendSuccess('A new OTP has been sent to your email!');
+        setOtp(['', '', '', '', '', '']);
+      }
+    } catch (error) {
+      setResendError(error.message || 'Failed to resend OTP. Please try again.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -65,7 +87,6 @@ const VerifyOTP = () => {
     setOtp(newOtp);
     setError('');
 
-    // Auto-focus next input
     if (value && index < 5) {
       const nextInput = document.getElementById(`otp-${index + 1}`);
       if (nextInput) nextInput.focus();
@@ -76,6 +97,19 @@ const VerifyOTP = () => {
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
       const prevInput = document.getElementById(`otp-${index - 1}`);
       if (prevInput) prevInput.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text').trim();
+    if (pasteData.length === 6 && /^\d+$/.test(pasteData)) {
+      const otpArray = pasteData.split('');
+      setOtp(otpArray);
+      const lastInput = document.getElementById(`otp-5`);
+      if (lastInput) lastInput.focus();
+    } else {
+      setError('Invalid OTP format. Please paste a 6-digit code.');
     }
   };
 
@@ -91,8 +125,20 @@ const VerifyOTP = () => {
         </div>
 
         {error && (
-          <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200" role="alert">
+          <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200">
             {error}
+          </div>
+        )}
+
+        {resendError && (
+          <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200">
+            {resendError}
+          </div>
+        )}
+
+        {resendSuccess && (
+          <div className="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 border border-green-200">
+            {resendSuccess}
           </div>
         )}
 
@@ -113,6 +159,7 @@ const VerifyOTP = () => {
                 value={digit}
                 onChange={(e) => handleOtpChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={handlePaste}
                 required
               />
             ))}
@@ -130,10 +177,11 @@ const VerifyOTP = () => {
         <div className="text-center mt-6 text-gray-600">
           Didn't receive the code?{' '}
           <button 
-            onClick={() => {/* Add resend logic here */}} 
-            className="text-black font-medium"
+            onClick={handleResendOtp}
+            className="text-black font-medium disabled:opacity-50"
+            disabled={resendLoading}
           >
-            Resend
+            {resendLoading ? 'Sending...' : 'Resend OTP'}
           </button>
         </div>
       </div>

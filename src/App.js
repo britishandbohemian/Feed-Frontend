@@ -32,7 +32,7 @@ function InactivityMonitor() {
   const navigate = useNavigate();
   const { logout } = useContext(UserContext);
 
-  // Timer logic remains unchanged...
+  // Timer logic
   const inactivityTimerRef = useRef(null);
 
   const resetTimer = useCallback(() => {
@@ -40,14 +40,19 @@ function InactivityMonitor() {
       clearTimeout(inactivityTimerRef.current);
     }
     inactivityTimerRef.current = setTimeout(() => {
+      console.log('User inactive. Logging out...'); // Debugging log
       logout();
       navigate('/login');
-    }, 600000);
+    }, 1800000); // 30 minutes
   }, [logout, navigate]);
 
   useEffect(() => {
+    console.log('Inactivity monitor initialized'); // Debugging log
     const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart', 'touchmove', 'touchend'];
-    const handleActivity = () => resetTimer();
+    const handleActivity = () => {
+      console.log('Activity detected. Resetting timer.'); // Debugging log
+      resetTimer();
+    };
 
     events.forEach((event) => {
       window.addEventListener(event, handleActivity);

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import apiRoutes from '../services/apiRoutes';
+import { registerUser } from '../services/authService'; // Import the registerUser function
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -28,40 +28,32 @@ const SignUp = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
-    // Validate password length
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long.');
-      setIsLoading(false);
-      return;
-    }
-
+  
     try {
-      // Send registration request to the backend
-      const response = await fetch(apiRoutes.auth.register, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: `${formData.firstName} ${formData.lastName}`,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
-
-      const data = await response.json();
-
-      // Handle response
-      if (data.success) {
-        // Store email temporarily for OTP verification
-        sessionStorage.setItem('verificationEmail', formData.email);
-        navigate('/verify-otp'); // Navigate to OTP verification page
+      // Prepare user data for registration
+      const userData = {
+        username: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        password: formData.password,
+      };
+  
+      // Call the registerUser function from authService
+      const response = await registerUser(userData);
+  
+      // Check if the response indicates success
+      if (response.success) {
+        // Store the email in sessionStorage for OTP verification
+        sessionStorage.setItem('pendingVerificationEmail', formData.email);
+  
+        // Redirect to the OTP verification page
+        navigate('/verify-otp');
       } else {
-        setError(data.message || 'Registration failed. Please try again.');
+        // Handle backend errors
+        throw new Error(response.message || 'Registration failed. Please try again.');
       }
     } catch (err) {
-      setError('Unable to connect to the server. Please try again later.');
+      // Handle errors
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }

@@ -1,49 +1,37 @@
-// Home.js
+
 import React, { useState, useEffect } from 'react';
 import { ArrowUpRight, Plus, ChevronLeft, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from '../context/UserContext.js';
+import { useUser } from '../context/UserContext';
+import { getTasks } from '../services/taskService';
+
 
 const Home = () => {
   const { user } = useUser();
   const navigate = useNavigate();
-
-  // Replace this with an empty array initially
   const [tasks, setTasks] = useState([]);
   const [showMore, setShowMore] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Fetch tasks on mount
+  // Fetch tasks using service
   useEffect(() => {
     const fetchTasks = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('No token found, user not authenticated');
+          setError('Authentication required');
           return;
         }
 
-        // Adjust the endpoint to your actual tasks URL
-        const response = await fetch('http://localhost:5000/api/tasks', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`, // typical Bearer token usage
-          },
-        });
-
-        if (!response.ok) {
-          console.error('Failed to fetch tasks:', response.statusText);
-          return;
-        }
-
-        const data = await response.json();
-        // Suppose your backend returns an array of tasks like:
-        // { success: true, tasks: [...] }
+        const { data } = await getTasks(token);
         setTasks(data.tasks || []);
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
+      } catch (err) {
+        setError(err.message || 'Failed to load tasks');
+      } finally {
+        setLoading(false);
       }
     };
 

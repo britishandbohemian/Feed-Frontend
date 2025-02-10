@@ -1,17 +1,25 @@
-import React, { useContext } from 'react';
-import { Navigate } from 'react-router-dom';
-import { UserContext } from '../context/UserContext';
+// ProtectedRoute.js
+import { useEffect } from 'react';
+import { useNavigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute = ({ children }) => {
-  const { user } = useContext(UserContext); // Assuming the UserContext holds the current user's state
+const ProtectedRoute = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
-  if (!user) {
-    // If the user is not authenticated, redirect to login
-    return <Navigate to="/login" replace />;
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+    </div>;
   }
 
-  // If authenticated, render the child component
-  return children;
+  return user ? <Outlet /> : null;
 };
 
 export default ProtectedRoute;

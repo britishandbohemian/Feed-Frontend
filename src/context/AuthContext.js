@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const AuthContext = createContext(null);
 
@@ -9,38 +10,48 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Add axios request interceptor
+    const requestInterceptor = axios.interceptors.request.use(config => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    });
+
+    // Add axios response interceptor
+    const responseInterceptor = axios.interceptors.response.use(
+      response => response,
+      error => {
+        if (error.response?.status === 401) {
+          logout();
+        }
+        return Promise.reject(error);
+      }
+    );
+
     checkAuth();
+
+    return () => {
+      // Cleanup interceptors
+      axios.interceptors.request.eject(requestInterceptor);
+      axios.interceptors.response.eject(responseInterceptor);
+    };
   }, []);
 
   const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const response = await fetch('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('No token found');
 
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData.data);
-        } else {
-          localStorage.removeItem('token');
-          setUser(null);
-          if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
-            navigate('/login');
-          }
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        localStorage.removeItem('token');
-        setUser(null);
-      }
-    } else {
-      setUser(null);
+      const response = await axios.get('/api/auth/me');
+      setUser(response.data.data);
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      logout();
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const login = async (token, userData) => {
@@ -52,13 +63,21 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
-    navigate('/login');
+    if (!['/login', '/signup'].includes(window.location.pathname)) {
+      navigate('/login');
+    }
   };
 
   return (
-      <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
-        {!loading && children}
-      </AuthContext.Provider>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      logout, 
+      checkAuth 
+    }}>
+      {!loading && children}
+    </AuthContext.Provider>
   );
 };
 
