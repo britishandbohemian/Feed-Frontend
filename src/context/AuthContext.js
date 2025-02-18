@@ -1,5 +1,5 @@
+// AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const AuthContext = createContext(null);
@@ -7,7 +7,6 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Add axios request interceptor
@@ -57,15 +56,11 @@ export const AuthProvider = ({ children }) => {
   const login = async (token, userData) => {
     localStorage.setItem('token', token);
     setUser(userData);
-    navigate('/home');
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
-    if (!['/login', '/signup'].includes(window.location.pathname)) {
-      navigate('/login');
-    }
   };
 
   return (

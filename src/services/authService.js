@@ -15,10 +15,28 @@ export const registerUser = async (userData) => {
 // Verify OTP
 export const verifyOtp = async (otpData) => {
   try {
-    const response = await axios.post(`${API_URL}/verify-otp`, otpData);
-    return response.data;
+    const response = await axios.post(
+      `${API_URL}/verify-otp`, 
+      otpData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
+    );
+    
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Invalid response format');
+    }
+    
+    return response;
   } catch (error) {
-    throw error.response.data;
+    if (error.response) {
+      // Preserve server error structure
+      throw error.response.data;
+    }
+    throw { message: error.message };
   }
 };
 

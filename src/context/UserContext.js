@@ -1,10 +1,14 @@
-// UserContext.js
+// context/UserContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-export const UserContext = createContext();
+const UserContext = createContext();
 
 export const useUser = () => {
-  return useContext(UserContext);
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
+  return context;
 };
 
 export const UserProvider = ({ children }) => {
@@ -29,20 +33,21 @@ export const UserProvider = ({ children }) => {
     const storedToken = localStorage.getItem('token');
     
     if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
-    } else {
-      logout();
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Failed to parse user data:', error);
+        // Clear corrupted data to prevent future errors
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
     }
   }, []);
 
   return (
-    <UserContext.Provider value={{ 
-      user, 
-      setUserInfo, 
-      isAuthenticated, 
-      logout 
-    }}>
+    <UserContext.Provider value={{ user, setUserInfo, isAuthenticated, logout }}>
       {children}
     </UserContext.Provider>
   );
