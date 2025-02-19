@@ -8,3 +8,17 @@ max-width: 1200px;
   margin: 0 auto;
   padding: 1rem;
 }
+
+/* Add this in your CSS file */
+.animate-loading {
+  animation: loadingAnimation 2s linear infinite;
+}
+
+@keyframes loadingAnimation {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}

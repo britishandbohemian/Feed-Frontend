@@ -1,22 +1,32 @@
-
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Plus, ChevronLeft, Clock } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Plus,
+  ChevronLeft,
+  Clock,
+  Calendar,
+  CheckSquare,
+  User,
+  Settings,
+  Search,
+  Menu,
+  X,
+  MoreHorizontal
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { getTasks } from '../services/taskService';
 
-
 const Home = () => {
   const { user } = useUser();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
-  const [showMore, setShowMore] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Fetch tasks using service
+  // Fetch tasks from API
   useEffect(() => {
     const fetchTasks = async () => {
       try {
@@ -27,7 +37,7 @@ const Home = () => {
         }
 
         const { data } = await getTasks(token);
-        setTasks(data.tasks || []);
+        setTasks(data.data || []);
       } catch (err) {
         setError(err.message || 'Failed to load tasks');
       } finally {
@@ -38,20 +48,14 @@ const Home = () => {
     fetchTasks();
   }, []);
 
-  // Functions for date/time formatting
-  const formatDate = (date) => {
+  // Date formatting functions
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No due date';
+    const date = new Date(dateString);
     const day = date.getDate();
     const suffix = getDaySuffix(day);
     const month = date.toLocaleString('default', { month: 'long' });
     return `${day}${suffix} ${month}`;
-  };
-
-  const formatTime = (date) => {
-    return date.toLocaleString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
   };
 
   const getDaySuffix = (day) => {
@@ -64,255 +68,140 @@ const Home = () => {
     }
   };
 
-  // If you need local expansion/progress logic, keep them:
-  const toggleTaskExpansion = (taskId) => {
-    setTasks(tasks.map(task =>
-      task._id === taskId
-        ? { ...task, isExpanded: !task.isExpanded }
-        : task
-    ));
-  };
-
-  const updateTaskProgress = (taskId, diff) => {
-    setTasks(tasks.map(task =>
-      task._id === taskId
-        ? {
-          ...task,
-          progress: Math.min(100, Math.max(0, (task.progress || 0) + diff))
-        }
-        : task
-    ));
-  };
-
-  const exit = () => {
-    navigate('/');
-  };
-
-  // If tasks have a "dueToday" property from the backend, filter them
-  const dueTodayTasks = tasks.filter(task => task.dueToday);
-
   return (
-    <div className="min-h-screen bg-gray-50 font-['Poppins'] relative">
-      {/* Mobile Menu Overlay */}
-      <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-          }`}
-        onClick={() => setIsMenuOpen(false)}
-      >
-        <div
-          className="fixed inset-y-0 left-0 w-64 bg-white shadow-lg transform transition-transform duration-300"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="p-4">
-            <button onClick={() => setIsMenuOpen(false)} className="mb-4">
-              <ChevronLeft size={24} />
-            </button>
-            <nav className="space-y-4">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="block p-2 hover:bg-gray-100 rounded text-left"
-              >
-                Dashboard
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-['Poppins'] relative">
+      {/* Navigation Bar */}
+      <nav className="bg-zinc-900 border-b border-zinc-800 fixed w-full top-0 z-50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2">
+              <h1 className="font-['Milonga'] text-2xl mb-3 text-violet-400">feed</h1>
+            </div>
+
+
+
+            <div className="flex items-center space-x-4">
+              <button className="p-2 hover:bg-zinc-800 rounded-full">
+                <Search className="h-5 w-5 text-zinc-400" />
               </button>
-              <button
-  onClick={() => navigate('/dashboard')}
-  className="block p-2 hover:bg-gray-100 rounded text-left"
->
-  Tasks
-</button>
-<button
-  onClick={() => navigate('/dashboard')}
-  className="block p-2 hover:bg-gray-100 rounded text-left"
->
-  settings
-</button>
+              <div className="h-8 w-8 bg-zinc-800 rounded-full flex items-center justify-center">
+                <User className="h-5 w-5 text-zinc-400" />
+              </div>
+              <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                <Menu className="h-6 w-6 text-zinc-400" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 z-40">
+          <div className="fixed inset-y-0 right-0 w-64 bg-zinc-900 shadow-lg p-4">
+            <div className="flex justify-end mb-4">
+              <button onClick={() => setIsMenuOpen(false)}>
+                <X className="h-6 w-6 text-zinc-400" />
+              </button>
+            </div>
+            <nav className="space-y-4">
+              <button className="block w-full text-left p-2 hover:bg-zinc-800 rounded text-zinc-400">
+                Todo
+              </button>
+              <button className="block w-full text-left p-2 hover:bg-zinc-800 rounded text-zinc-400">
+                Projects
+              </button>
+              <button className="block w-full text-left p-2 hover:bg-zinc-800 rounded text-zinc-400">
+                Calendar
+              </button>
+              <button className="block w-full text-left p-2 hover:bg-zinc-800 rounded text-zinc-400">
+                Settings
+              </button>
             </nav>
           </div>
         </div>
-      </div>
-
-      {/* Header */}
-      <header className="border-b border-gray-200 p-4 sticky top-0 bg-white z-30 shadow-sm">
-        <div className="container mx-auto flex justify-between items-center max-w-6xl">
-          <h2 className="text-base sm:text-lg">{formatDate(new Date())}</h2>
-          <h1 className="font-['Milonga'] text-xl sm:text-2xl">feed</h1>
-          <button
-            onClick={exit}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ArrowUpRight size={24} />
-          </button>
-        </div>
-      </header>
+      )}
 
       {/* Main Content */}
-      <main className="container mx-auto max-w-6xl">
-
+      <main className="pt-16 container mx-auto px-4 max-w-6xl">
+        {/* Header Section */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="p-4 mb-8"
+          className="bg-zinc-900 rounded-xl border border-zinc-800 mt-6 overflow-hidden"
         >
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="h-48 bg-gradient-to-r from-red-600 to-red-800 relative">
-              {/* Example placeholder image */}
-              <img
-                src="/api/placeholder/800/400"
-                alt=""
-                className="w-full h-full object-cover mix-blend-overlay"
-              />
-              <div className="absolute bottom-4 left-6 text-white">
-                <h2 className="text-3xl font-bold mb-2">
-                  Welcome back, {user?.username || 'Guest'}
-                </h2>
+          <div className="bg-gradient-to-r from-violet-600 to-violet-800 p-6">
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">
+              Welcome back, {user?.username || 'User'}
+            </h1>
+            <p className="text-zinc-300">Stay productive today!</p>
+          </div>
+          <div className="p-6">
+            <div className="flex flex-wrap gap-6">
+              <div className="flex items-center gap-2 text-zinc-400">
+                <Clock className="h-5 w-5" />
+                <span>{formatDate(new Date().toISOString())}</span>
               </div>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock size={16} />
-                <span>{formatTime(new Date())}</span>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">
-                  Due Today
-                </h3>
-                <div className="flex gap-2 flex-wrap">
-                  {dueTodayTasks.map((task) => (
-                    <span
-                      key={task._id}
-                      className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm"
-                    >
-                      {task.title}
-                    </span>
-                  ))}
-                </div>
+              <div className="flex items-center gap-2 text-zinc-400">
+                <CheckSquare className="h-5 w-5" />
+                <span>{tasks.filter(t => !t.completed).length} pending tasks</span>
               </div>
             </div>
           </div>
         </motion.section>
 
-        {/* Goals Section */}
-        <section className="p-4">
+        {/* Tasks Section */}
+        <section className="mt-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold">Goals</h2>
-            <div className="w-1/3 h-1 bg-black"></div>
+            <h2 className="text-xl font-bold">Today's Tasks</h2>
+            <button className="bg-violet-600 text-white rounded-full p-3 hover:bg-violet-500 transition-colors">
+              <Plus className="h-5 w-5" />
+            </button>
           </div>
 
-          {/* Task Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {tasks.map((task) => (
+          <div className="space-y-4">
+            {tasks.map(task => (
               <motion.div
                 key={task._id}
                 whileHover={{ scale: 1.02 }}
-                transition={{ type: 'spring', stiffness: 300 }}
-                className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border-t-4 border-red-600"
-                onClick={() => toggleTaskExpansion(task._id)}
+                className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 hover:border-violet-500/50 transition-all"
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold mb-1">{task.title}</h3>
-                    <p className="text-lg font-medium mb-2">{task.daysLeft} days left</p>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-1 bg-red-50 text-red-700 rounded-full text-sm">
-                        {task.status}
-                      </span>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4">
+                    <input
+                      type="checkbox"
+                      checked={task.completed}
+                      className="mt-1.5 h-4 w-4 rounded border-zinc-600 bg-zinc-800"
+                    />
+                    <div>
+                      <h3 className="font-medium">{task.title}</h3>
+                      <p className="text-sm text-zinc-500 mt-1">{task.description}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="px-2 py-1 rounded-full text-xs bg-violet-500/10 text-violet-400">
+                          {task.completed ? 'Completed' : 'Pending'}
+                        </span>
+                        <span className="text-sm text-zinc-500">
+                          {formatDate(task.dueDate)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <button
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // maybe open a detailed view or modal
-                    }}
-                  >
-                    <ArrowUpRight size={24} />
+                  <button className="p-1 hover:bg-zinc-800 rounded-full">
+                    <MoreHorizontal className="h-5 w-5 text-zinc-400" />
                   </button>
-                </div>
-
-                <p className="text-gray-600 mb-4">{task.description}</p>
-
-                {/* Progress Bar */}
-                <div className="relative">
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-red-600 to-red-800"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${task.progress || 0}%` }}
-                      transition={{ duration: 0.5 }}
-                    />
-                  </div>
-
-                  {/* Expandable controls */}
-                  {task.isExpanded && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="mt-4 space-y-2"
-                    >
-                      <div className="flex justify-between text-sm">
-                        <span>Progress: {task.progress || 0}%</span>
-                        <div className="space-x-2">
-                          <button
-                            className="px-3 py-1 bg-red-50 text-red-700 rounded-full hover:bg-red-100 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateTaskProgress(task._id, -10);
-                            }}
-                          >
-                            -10%
-                          </button>
-                          <button
-                            className="px-3 py-1 bg-red-50 text-red-700 rounded-full hover:bg-red-100 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateTaskProgress(task._id, 10);
-                            }}
-                          >
-                            +10%
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
                 </div>
               </motion.div>
             ))}
           </div>
         </section>
 
-        {/* More Section */}
-        <motion.section
-          className="p-4 mt-4 mb-20 sm:mb-8"
-          animate={showMore ? { height: 'auto' } : { height: 'auto' }}
-        >
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <h2 className="text-xl sm:text-2xl font-bold">More</h2>
-              <div className="w-16 sm:w-24 h-1 bg-black"></div>
-            </div>
-            <button
-              onClick={() => setShowMore(!showMore)}
-              className="bg-black text-white rounded-full p-4 hover:bg-gray-800 transition-colors shadow-lg hover:shadow-xl"
-            >
-              <Plus
-                size={24}
-                className={`transform transition-transform ${showMore ? 'rotate-45' : 'rotate-0'}`}
-              />
-            </button>
-          </div>
-
-          {showMore && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-            >
-              {/* Additional goals/tasks could go here */}
-            </motion.div>
-          )}
-        </motion.section>
+        {/* Quick Actions */}
+        <div className="fixed bottom-6 right-6 flex items-center space-x-4">
+          <button className="bg-violet-600 text-white rounded-full p-4 shadow-lg hover:bg-violet-500 transition-colors">
+            <Plus className="h-5 w-5" />
+          </button>
+          onClick={() => navigate('/NewTask')}
+        </div>
       </main>
     </div>
   );
