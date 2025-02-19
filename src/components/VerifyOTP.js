@@ -1,17 +1,14 @@
-// components/VerifyOTP.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { verifyOtp } from '../services/authService';
-import { useUser } from '../context/UserContext';
+import { verifyEmailOtp } from '../services/api';
 
 const VerifyOTP = () => {
   const navigate = useNavigate();
-  const { setUserInfo } = useUser();
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const email = localStorage.getItem('pendingVerificationEmail');
   const [showLoadingBar, setShowLoadingBar] = useState(false);
+  const email = localStorage.getItem('pendingVerificationEmail');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,16 +17,21 @@ const VerifyOTP = () => {
     setShowLoadingBar(true);
 
     try {
-      const response = await verifyOtp({ email, otp });
+      const response = await verifyEmailOtp({ email, otp });
 
-      if (response.data.success) {
-        setUserInfo(response.data.user);
-        localStorage.setItem('token', response.data.token);
-        localStorage.removeItem('pendingVerificationEmail');
+      if (response?.data?.success) {
+        // ✅ Save user info & token
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('token', response.data.token); // ✅ Save auth token
+        localStorage.removeItem('pendingVerificationEmail'); // ✅ Remove email after verification
+
+        // ✅ Redirect to home
         navigate('/home');
+      } else {
+        setError('Invalid OTP. Please try again.');
       }
     } catch (err) {
-      setError(err.message);
+      setError(err?.response?.data?.message || 'An error occurred during verification.');
     } finally {
       setIsLoading(false);
       setShowLoadingBar(false);
@@ -61,9 +63,7 @@ const VerifyOTP = () => {
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               placeholder="Enter 6-digit OTP"
-              className="w-full p-4 bg-zinc-900 rounded-xl border-2 border-zinc-800 
-                       placeholder-zinc-500 focus:border-violet-500 focus:outline-none
-                       transition-colors duration-200 text-center"
+              className="w-full p-4 bg-zinc-900 rounded-xl border-2 border-zinc-800 placeholder-zinc-500 focus:border-violet-500 focus:outline-none transition-colors duration-200 text-center"
               required
               style={{ width: '48%', maxWidth: '192px' }}
             />
@@ -71,29 +71,13 @@ const VerifyOTP = () => {
 
           <button
             type="submit"
-            className="w-full bg-violet-600 text-white p-4 rounded-xl font-medium
-                     transition-all duration-200 hover:bg-violet-500
-                     focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-zinc-950
-                     disabled:opacity-50 disabled:hover:bg-violet-600 flex items-center justify-center"
+            className="w-full bg-violet-600 text-white p-4 rounded-xl font-medium transition-all duration-200 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:hover:bg-violet-600 flex items-center justify-center"
             disabled={isLoading}
           >
-            {isLoading ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            ) : null}
+            {isLoading ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> : null}
             {isLoading ? 'Verifying...' : 'Verify Account'}
           </button>
         </form>
-
-        <div className="mt-8 text-center text-zinc-400">
-          Didn't receive the OTP?{' '}
-          <button
-            onClick={() => navigate('/resend-otp')}
-            className="text-violet-400 font-medium hover:text-violet-300 
-                     transition-colors duration-200 focus:outline-none"
-          >
-            Request new OTP
-          </button>
-        </div>
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const generateAISteps = async (description, timeframe) => {
     if (!description) return [];
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro"});
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     const prompt = `Generate detailed task steps for a ${timeframe} timeframe based on this description: 
   "${description}". 
@@ -42,30 +42,34 @@ const StepGenerator = ({ description, timeframe, onStepsGenerated }) => {
     const [isGenerating, setIsGenerating] = useState(false);
 
     const handleGenerateSteps = async () => {
+        if (!description.trim()) return;
         setIsGenerating(true);
+
         try {
             const steps = await generateAISteps(description, timeframe);
-            onStepsGenerated(steps);
+            if (steps.length > 0) {
+                onStepsGenerated(steps);
+            } else {
+                console.warn("No steps generated");
+            }
         } catch (error) {
-            console.error(error);
+            console.error("AI Step generation error:", error);
+        } finally {
+            setIsGenerating(false);
         }
-        setIsGenerating(false);
     };
 
     return (
         <button
             onClick={handleGenerateSteps}
-            disabled={!description || isGenerating}
-            className={`
-        flex items-center justify-center 
-        bg-blue-600 text-white 
-        px-4 py-2 rounded-lg
-        ${!description ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}
-      `}
+            disabled={isGenerating}
+            className={`flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded-lg
+        ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
         >
             {isGenerating ? 'Generating...' : 'Generate AI Steps'}
         </button>
     );
 };
+
 
 export default StepGenerator;

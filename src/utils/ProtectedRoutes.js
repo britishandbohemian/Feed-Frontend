@@ -1,15 +1,23 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useUser } from '../context/UserContext';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 const ProtectedRoute = () => {
-  const { isAuthenticated, isLoading } = useUser();
+  const token = localStorage.getItem('token');
+  const location = useLocation();
 
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return <div>Loading...</div>;
+  // ✅ Public pages that don't require authentication
+  const publicRoutes = ['/login', '/signup', '/verify-otp'];
+
+  // ✅ If token is missing or invalid, clean it
+  if (!token || token === "null" || token === "undefined") {
+    localStorage.removeItem('token'); // Clean invalid token
+
+    // ✅ Allow access if the user is already on a public page
+    if (publicRoutes.some(route => location.pathname.startsWith(route))) {
+      return <Outlet />;
+    }
+
+    return <Navigate to="/login" replace />;
   }
-
 
   return <Outlet />;
 };

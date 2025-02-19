@@ -8,7 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-
+import { createTask } from '../services/api'; // ✅ Import API function
 
 
 const FeedPage = () => {
@@ -104,37 +104,46 @@ const FeedPage = () => {
   const handleFormSubmit = async (event) => {
     event.preventDefault();
 
+    if (!title.trim() || !description.trim()) {
+      setShowRequiredField(true);
+      return;
+    }
+
+    const user = JSON.parse(localStorage.getItem('user')); // ✅ Get logged-in user
+    if (!user || !user.id) {
+      console.error("User not found, unable to create task");
+      return;
+    }
+
+    // ✅ Ensure steps are correctly structured
+    const formattedSteps = steps.map(({ title, deadline, mandatory }) => ({
+      title: title.trim(),
+      deadline: deadline.trim() || "N/A", // Provide default if empty
+      mandatory,
+    }));
+
     const taskData = {
-      title,
-      description,
-      selectedDate,
-      timeframe,
-      steps: steps.map(({ title, deadline, mandatory }) => ({
-        title,
-        deadline,
-        mandatory,
-      })),
-      aiTypingSuggestion,
+      title: title.trim(),
+      description: description.trim(),
+      dueDate: selectedDate.toISOString(), // ✅ Ensure correct date format
+      steps: formattedSteps, // ✅ Include steps
+      owner: user.id, // ✅ Link task to user
     };
 
     try {
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(taskData),
-      });
+      const response = await createTask(taskData);
 
-      if (response.ok) {
-        console.log('Task created successfully');
+      if (response?.data?.success) {
+        console.log('Task created successfully:', response.data);
+        navigate('/home'); // ✅ Redirect to Home Page
       } else {
-        console.error('Error creating task:', response.status);
+        console.error('Error creating task:', response.data?.message);
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', error?.response?.data?.message || error.message);
     }
   };
+
 
   // Navigation Function
   const goBack = () => {

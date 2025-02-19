@@ -1,30 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../services/authService';
-import { useUser } from '../context/UserContext';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { loginUser } from '../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated, userInfo } = useUser();
+  const location = useLocation();
+
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(true);
   const [showLoadingBar, setShowLoadingBar] = useState(false);
 
-  // Redirect if already authenticated
+  // Ensure localStorage data is valid before parsing
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/home');
-    }
-  }, [isAuthenticated, navigate]);
+    try {
+      const storedUser = localStorage.getItem('user');
+      const user = storedUser ? JSON.parse(storedUser) : null;
 
-  // Check verification status when userInfo changes
-  useEffect(() => {
-    if (userInfo && !userInfo.isVerified) {
-      setIsVerified(false);
+      if (user) {
+        setIsVerified(user.isEmailVerified);
+        const from = location.state?.from?.pathname || "/home";
+        navigate(from, { replace: true });
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
     }
-  }, [userInfo]);
+  }, [navigate, location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,20 +37,34 @@ const Login = () => {
     try {
       const response = await loginUser(formData);
 
-      if (response.success) {
-        // Use the login function from UserContext
-        login(response.data.token, response.data.user);
-        navigate('/home');
+      if (response?.data?.data) {
+        const userData = response.data.data;
+        const token = userData.token; // Extract token
+
+        if (token) {
+          localStorage.setItem('user', JSON.stringify(userData));
+          localStorage.setItem('token', token); // Save token
+
+          if (!userData.isEmailVerified) {
+            setIsVerified(false);
+            setError('Your email is not verified. Please verify your account.');
+          } else {
+            navigate('/home');
+          }
+        } else {
+          setError('Authorization token is missing.');
+        }
       } else {
-        setError(response.message || 'Login failed');
+        setError(response?.data?.message || 'Login failed');
       }
     } catch (err) {
-      setError(err.message || 'An error occurred during login');
+      setError(err.response?.data?.message || 'An error occurred during login');
     } finally {
       setIsLoading(false);
       setShowLoadingBar(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 font-['Poppins']">
@@ -71,9 +87,7 @@ const Login = () => {
             <input
               type="email"
               placeholder="Email"
-              className="w-full p-4 bg-zinc-900 rounded-xl border-2 border-zinc-800 
-                       placeholder-zinc-500 focus:border-violet-500 focus:outline-none
-                       transition-colors duration-200"
+              className="w-full p-4 bg-zinc-900 rounded-xl border-2 border-zinc-800 placeholder-zinc-500 focus:border-violet-500 focus:outline-none transition-colors duration-200"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
@@ -84,9 +98,7 @@ const Login = () => {
             <input
               type="password"
               placeholder="Password"
-              className="w-full p-4 bg-zinc-900 rounded-xl border-2 border-zinc-800 
-                       placeholder-zinc-500 focus:border-violet-500 focus:outline-none
-                       transition-colors duration-200"
+              className="w-full p-4 bg-zinc-900 rounded-xl border-2 border-zinc-800 placeholder-zinc-500 focus:border-violet-500 focus:outline-none transition-colors duration-200"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
@@ -95,10 +107,7 @@ const Login = () => {
 
           <button
             type="submit"
-            className="w-full bg-violet-600 text-white p-4 rounded-xl font-medium
-                     transition-all duration-200 hover:bg-violet-500
-                     focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-zinc-950
-                     disabled:opacity-50 disabled:hover:bg-violet-600 flex items-center justify-center"
+            className="w-full bg-violet-600 text-white p-4 rounded-xl font-medium transition-all duration-200 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:hover:bg-violet-600 flex items-center justify-center"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -110,11 +119,8 @@ const Login = () => {
 
         {!isVerified && (
           <button
-            onClick={() => navigate('/verify')}
-            className="w-full bg-red-600 text-white p-4 rounded-xl font-medium
-                     transition-all duration-200 hover:bg-red-500
-                     focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-950
-                     mt-4"
+            onClick={() => navigate('/verify-otp')}
+            className="w-full bg-red-600 text-white p-4 rounded-xl font-medium transition-all duration-200 hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-950 mt-4"
           >
             Verify Account
           </button>
@@ -124,8 +130,7 @@ const Login = () => {
           Don't have an account?{' '}
           <button
             onClick={() => navigate('/signup')}
-            className="text-violet-400 font-medium hover:text-violet-300 
-                     transition-colors duration-200 focus:outline-none"
+            className="text-violet-400 font-medium hover:text-violet-300 transition-colors duration-200 focus:outline-none"
           >
             Sign up
           </button>
