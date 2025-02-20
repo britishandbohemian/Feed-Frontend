@@ -12,12 +12,18 @@ const Login = () => {
   const [isVerified, setIsVerified] = useState(true);
   const [showLoadingBar, setShowLoadingBar] = useState(false);
   const [isApiConnected, setIsApiConnected] = useState(false); // State for API connectivity
+  const API_URL = 'https://orange-parakeet-wg447765vj6h5qp7-5000.app.github.dev';
 
   // Check API connectivity when the component mounts
   useEffect(() => {
     const checkApiConnectivity = async () => {
       try {
-        const response = await fetch('https://feed-api.vercel.app/health');
+        const response = await fetch(`${API_URL}/health`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
         if (response.ok) {
           setIsApiConnected(true); // API is reachable
         } else {
