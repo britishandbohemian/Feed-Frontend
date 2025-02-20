@@ -11,6 +11,25 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(true);
   const [showLoadingBar, setShowLoadingBar] = useState(false);
+  const [isApiConnected, setIsApiConnected] = useState(false); // State for API connectivity
+
+  // Check API connectivity when the component mounts
+  useEffect(() => {
+    const checkApiConnectivity = async () => {
+      try {
+        const response = await fetch('https://feed-api.vercel.app/');
+        if (response.ok) {
+          setIsApiConnected(true); // API is reachable
+        } else {
+          setIsApiConnected(false); // API is not reachable
+        }
+      } catch (err) {
+        setIsApiConnected(false); // API is not reachable
+      }
+    };
+
+    checkApiConnectivity();
+  }, []);
 
   // Ensure localStorage data is valid before parsing
   useEffect(() => {
@@ -65,9 +84,21 @@ const Login = () => {
     }
   };
 
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 font-['Poppins']">
+      {/* Dot indicator */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          width: '12px',
+          height: '12px',
+          borderRadius: '50%',
+          backgroundColor: isApiConnected ? 'green' : 'red',
+        }}
+      ></div>
+
       {showLoadingBar && <div className="w-full h-1 bg-zinc-800 animate-loading"></div>}
 
       <div className="w-full max-w-md p-8">
