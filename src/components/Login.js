@@ -17,7 +17,7 @@ const Login = () => {
   useEffect(() => {
     const checkApiConnectivity = async () => {
       try {
-        const response = await fetch('https://feed-api.vercel.app/');
+        const response = await fetch('https://feed-api.vercel.app/health');
         if (response.ok) {
           setIsApiConnected(true); // API is reachable
         } else {
@@ -27,7 +27,7 @@ const Login = () => {
         setIsApiConnected(false); // API is not reachable
       }
     };
-
+  
     checkApiConnectivity();
   }, []);
 
