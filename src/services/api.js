@@ -92,14 +92,7 @@ export const deleteUser = async (id) => apiClient.delete(`/users/${id}`);
 
 // ✅ PROTECTED TASK ROUTES
 export const fetchTasks = async () => apiClient.get('/tasks');
-export const createTask = async (taskData) => {
-    const token = localStorage.getItem('token'); // ✅ Get auth token
-
-    return apiClient.post('/tasks', taskData, {
-        headers: { Authorization: `Bearer ${token}` }, // ✅ Attach token for auth
-    });
-};
-
-
+export const createTask = async (taskData) => apiClient.post('/tasks', taskData);
+export const getTaskById = async (taskId) => apiClient.get(`/tasks/${taskId}`);
 export const updateTask = async (taskId, taskData) => apiClient.put(`/tasks/${taskId}`, taskData);
 export const deleteTask = async (taskId) => apiClient.delete(`/tasks/${taskId}`);
