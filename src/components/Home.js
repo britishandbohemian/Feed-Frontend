@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import TaskCard from '../components/TaskCard';
+import { AnimatePresence } from 'framer-motion';  
 import {
   Plus,
   Clock,
@@ -12,7 +14,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { fetchTasks, logoutUser } from '../services/api';
+import { fetchTasks, logoutUser, deleteTask,updateTask } from '../services/api';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -54,6 +56,40 @@ const Home = () => {
       navigate('/login');
     } catch (error) {
       console.error('Logout failed:', error);
+    }
+  };
+
+  const handleTaskToggle = async (task, completed) => {
+    try {
+      // Optimistic update
+      setTasks(tasks.map(t => 
+        t._id === task._id ? { ...t, completed } : t
+      ));
+
+      // Update in backend
+      await updateTask(task._id, { completed });
+    } catch (error) {
+      // Revert on failure
+      setTasks(tasks.map(t => 
+        t._id === task._id ? { ...t, completed: !completed } : t
+      ));
+      console.error('Failed to update task:', error);
+    }
+  };
+
+  const handleTaskDelete = async (task) => {
+    if (!window.confirm('Are you sure you want to delete this task?')) return;
+
+    try {
+      // Optimistic update
+      setTasks(tasks.filter(t => t._id !== task._id));
+
+      // Delete from backend
+      await deleteTask(task._id);
+    } catch (error) {
+      // Revert on failure
+      setTasks(prevTasks => [...prevTasks, task]);
+      console.error('Failed to delete task:', error);
     }
   };
 
@@ -150,51 +186,64 @@ const Home = () => {
           </div>
         </motion.section>
 
-        {/* ✅ Tasks Section */}
-        <section className="mt-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold">Today's Tasks</h2>
-            <button
-              className="bg-violet-600 text-white rounded-full p-3 hover:bg-violet-500 transition-colors"
-              onClick={() => navigate('/new-task')} // ✅ Redirects to add task page
-            >
-              <Plus className="h-5 w-5" />
-            </button>
-          </div>
+  {/* ✅ Tasks Section */}
+  <section className="mt-8">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold">Today's Tasks</h2>
+          <button
+            className="bg-violet-600 text-white rounded-full p-3 hover:bg-violet-500 transition-colors"
+            onClick={() => navigate('/new-task')}
+          >
+            <Plus className="h-5 w-5" />
+          </button>
+        </div>
 
-          {loading ? (
-            <p className="text-zinc-400">Loading tasks...</p>
-          ) : error ? (
-            <p className="text-red-400">{error}</p>
-          ) : (
-            <div className="space-y-4">
+        {loading ? (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-zinc-400"
+          >
+            Loading tasks...
+          </motion.p>
+        ) : error ? (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-red-400"
+          >
+            {error}
+          </motion.p>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="space-y-4"
+          >
+            <AnimatePresence mode="popLayout">
               {tasks.map(task => (
-                <motion.div
+                <TaskCard
                   key={task._id}
-                  whileHover={{ scale: 1.02 }}
-                  className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 hover:border-violet-500/50 transition-all"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4">
-                      <input
-                        type="checkbox"
-                        checked={task.completed}
-                        className="mt-1.5 h-4 w-4 rounded border-zinc-600 bg-zinc-800"
-                      />
-                      <div>
-                        <h3 className="font-medium">{task.title}</h3>
-                        <p className="text-sm text-zinc-500 mt-1">{task.description}</p>
-                      </div>
-                    </div>
-                    <button className="p-1 hover:bg-zinc-800 rounded-full">
-                      <MoreHorizontal className="h-5 w-5 text-zinc-400" />
-                    </button>
-                  </div>
-                </motion.div>
+                  task={task}
+                  onToggle={handleTaskToggle}
+                  onDelete={handleTaskDelete}
+                />
               ))}
-            </div>
-          )}
-        </section>
+              {tasks.length === 0 && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center text-zinc-500 py-8"
+                >
+                  No tasks yet. Click the + button to add one!
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </section>
+
       </main>
     </div>
   );

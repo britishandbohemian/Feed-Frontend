@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import StepGenerator from './StepGenerator'
+import React, { useState, useEffect } from 'react'; // Removed `useRef`
+import StepGenerator from './StepGenerator';
 import {
   Check, Brain, Plus,
   Calendar, ChevronLeft, ChevronRight, X, Save,
@@ -7,12 +7,16 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { createTask } from '../services/api';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-import { createTask } from '../services/api'; // ✅ Import API function
+
+const GEMINI_API_KEY = "AIzaSyCppG9ocImc1e3HBsDeCZJWaL9IDm9wg2Q";
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
 
 
 const FeedPage = () => {
-  // State Management
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -21,26 +25,36 @@ const FeedPage = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showRequiredField, setShowRequiredField] = useState(false);
-
-
-
-
-
-
-  // Steps State
-  const [steps, setSteps] = useState([
-    { id: 1, title: "Break down task into smaller steps", deadline: "2 hours", mandatory: true },
-    { id: 2, title: "Set up quick milestones", deadline: "30 mins", mandatory: false }
-  ]);
+  const [steps, setSteps] = useState([]);
   const [aiTypingSuggestion, setAiTypingSuggestion] = useState('');
   const [newStep, setNewStep] = useState({ title: '', deadline: '', mandatory: false });
   const [showNewStepForm, setShowNewStepForm] = useState(false);
 
 
+  // Refine title and description using Gemini AI
+  const makeTextConcise = async (text) => {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const prompt = `Make the following text more concise and clear: "${text}"`;
 
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response.text();
+      return response.trim();
+    } catch (error) {
+      console.error("Error making text concise:", error);
+      return text; // Return original text if there's an error
+    }
+  };
 
+  const handleRefineTitle = async () => {
+    const conciseTitle = await makeTextConcise(title);
+    setTitle(conciseTitle);
+  };
 
-  // Mobile Detection
+  const handleRefineDescription = async () => {
+    const conciseDescription = await makeTextConcise(description);
+    setDescription(conciseDescription);
+  };
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -49,9 +63,6 @@ const FeedPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-
-
-  // AI Predictive Typing
   useEffect(() => {
     if (title.length > 3) {
       const suggestions = {
@@ -69,9 +80,6 @@ const FeedPage = () => {
     }
   }, [title]);
 
-
-
-  // Step Management Functions
   const addNewStep = () => {
     if (newStep.title.trim()) {
       setSteps([...steps, {
@@ -100,7 +108,6 @@ const FeedPage = () => {
     }
   };
 
-  // Form Submission Handler
   const handleFormSubmit = async (event) => {
     event.preventDefault();
 
@@ -109,25 +116,24 @@ const FeedPage = () => {
       return;
     }
 
-    const user = JSON.parse(localStorage.getItem('user')); // ✅ Get logged-in user
+    const user = JSON.parse(localStorage.getItem('user'));
     if (!user || !user.id) {
       console.error("User not found, unable to create task");
       return;
     }
 
-    // ✅ Ensure steps are correctly structured
     const formattedSteps = steps.map(({ title, deadline, mandatory }) => ({
       title: title.trim(),
-      deadline: deadline.trim() || "N/A", // Provide default if empty
+      deadline: deadline.trim() || "N/A",
       mandatory,
     }));
 
     const taskData = {
       title: title.trim(),
       description: description.trim(),
-      dueDate: selectedDate.toISOString(), // ✅ Ensure correct date format
-      steps: formattedSteps, // ✅ Include steps
-      owner: user.id, // ✅ Link task to user
+      dueDate: selectedDate.toISOString(),
+      steps: formattedSteps,
+      owner: user.id,
     };
 
     try {
@@ -135,7 +141,7 @@ const FeedPage = () => {
 
       if (response?.data?.success) {
         console.log('Task created successfully:', response.data);
-        navigate('/home'); // ✅ Redirect to Home Page
+        navigate('/home');
       } else {
         console.error('Error creating task:', response.data?.message);
       }
@@ -144,23 +150,19 @@ const FeedPage = () => {
     }
   };
 
-
-  // Navigation Function
   const goBack = () => {
     navigate('/home');
   };
 
-  // Subcomponents
   const StepsSection = () => {
     const handleAIGeneratedSteps = (generatedSteps) => {
-      // Replace existing steps with AI-generated steps
       setSteps(generatedSteps);
     };
 
     return (
       <div className="relative">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Steps</h2>
+          <h2 className="text-lg font-semibold text-zinc-100">Steps</h2>
           <div className="flex space-x-2">
             {title && description && (
               <StepGenerator
@@ -173,7 +175,7 @@ const FeedPage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowNewStepForm(true)}
-              className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-2 rounded-lg"
+              className="flex items-center space-x-2 text-violet-400 hover:text-violet-300 bg-zinc-800 px-3 py-2 rounded-lg"
             >
               <Plus className="w-5 h-5" />
               <span className="text-sm font-medium">Add Step</span>
@@ -188,17 +190,17 @@ const FeedPage = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg hover:border-blue-200 hover:bg-blue-50/50 transition-colors"
+              className="flex items-start space-x-4 p-4 border border-zinc-800 rounded-lg hover:border-violet-500/50 hover:bg-zinc-800/50 transition-colors"
             >
-              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-sm font-medium text-blue-600">
+              <div className="w-6 h-6 rounded-full bg-violet-600/20 flex items-center justify-center text-sm font-medium text-violet-400">
                 {index + 1}
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-medium">{step.title}</h3>
-                <div className="flex items-center mt-2 space-x-3 text-sm text-gray-500">
+                <h3 className="text-base font-medium text-zinc-100">{step.title}</h3>
+                <div className="flex items-center mt-2 space-x-3 text-sm text-zinc-400">
                   <span>{step.deadline}</span>
                   {step.mandatory && (
-                    <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs">
+                    <span className="bg-red-600/20 text-red-400 px-2 py-0.5 rounded-full text-xs">
                       Required
                     </span>
                   )}
@@ -207,23 +209,23 @@ const FeedPage = () => {
               <div className="flex space-x-1">
                 <button
                   onClick={() => moveStep(step.id, 'up')}
-                  className="p-2 hover:bg-blue-100 rounded-full"
+                  className="p-2 hover:bg-zinc-700 rounded-full"
                   disabled={index === 0}
                 >
-                  <ArrowUp className="w-4 h-4 text-blue-600" />
+                  <ArrowUp className="w-4 h-4 text-violet-400" />
                 </button>
                 <button
                   onClick={() => moveStep(step.id, 'down')}
-                  className="p-2 hover:bg-blue-100 rounded-full"
+                  className="p-2 hover:bg-zinc-700 rounded-full"
                   disabled={index === steps.length - 1}
                 >
-                  <ArrowDown className="w-4 h-4 text-blue-600" />
+                  <ArrowDown className="w-4 h-4 text-violet-400" />
                 </button>
                 <button
                   onClick={() => deleteStep(step.id)}
-                  className="p-2 hover:bg-red-100 rounded-full"
+                  className="p-2 hover:bg-red-600/20 rounded-full"
                 >
-                  <Trash2 className="w-4 h-4 text-red-600" />
+                  <Trash2 className="w-4 h-4 text-red-400" />
                 </button>
               </div>
             </motion.div>
@@ -234,7 +236,7 @@ const FeedPage = () => {
   };
 
   const CalendarPicker = ({ isMobile }) => {
-    const daysInMonth = 31; // Simplified for example
+    const daysInMonth = 31;
     const daySize = isMobile ? 40 : 32;
 
     return (
@@ -242,9 +244,9 @@ const FeedPage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className={`bg-white rounded-xl shadow-lg ${isMobile ? 'fixed inset-0 z-50' : ''}`}
+        className={`bg-zinc-900 rounded-xl border border-zinc-800 ${isMobile ? 'fixed inset-0 z-50' : ''}`}
       >
-        <div className="bg-black text-white p-4 flex justify-between items-center">
+        <div className="bg-violet-600 text-white p-4 flex justify-between items-center">
           {isMobile && (
             <button onClick={() => setShowCalendar(false)} className="text-white">
               <X className="w-6 h-6" />
@@ -267,7 +269,7 @@ const FeedPage = () => {
         <div className="p-4">
           <div className="grid grid-cols-7 mb-2">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-              <div key={index} className="text-center text-xs text-gray-500 font-medium">
+              <div key={index} className="text-center text-xs text-zinc-400 font-medium">
                 {day}
               </div>
             ))}
@@ -283,7 +285,7 @@ const FeedPage = () => {
                   flex items-center justify-center
                   ${isMobile ? 'h-10 w-10' : 'h-8 w-8'}
                   rounded-full text-sm
-                  ${selectedDate.getDate() === i + 1 ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}
+                  ${selectedDate.getDate() === i + 1 ? 'bg-violet-600 text-white' : 'hover:bg-zinc-800 text-zinc-400'}
                 `}
                 onClick={() => {
                   setSelectedDate(new Date(2024, 0, i + 1));
@@ -297,10 +299,10 @@ const FeedPage = () => {
         </div>
 
         {isMobile && (
-          <div className="p-4 border-t">
+          <div className="p-4 border-t border-zinc-800">
             <button
               onClick={() => setShowCalendar(false)}
-              className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium"
+              className="w-full py-3 bg-violet-600 text-white rounded-lg font-medium"
             >
               Confirm Date
             </button>
@@ -310,28 +312,24 @@ const FeedPage = () => {
     );
   };
 
-
-  // Render the Main Component
   return (
-    <div className=" bg-gray-50">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-['Poppins']">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <header className="flex items-center py-6 border-b border-gray-200 bg-white">
-          <button onClick={goBack} className="p-2 hover:bg-gray-100 rounded-full">
-            <ChevronLeft size={24} />
+        <header className="flex items-center py-6 border-b border-zinc-800 bg-zinc-900">
+          <button onClick={goBack} className="p-2 hover:bg-zinc-800 rounded-full">
+            <ChevronLeft size={24} className="text-zinc-400" />
           </button>
-
-
-          <h1 className="flex-1 text-center text-2xl font-semibold">New Task</h1>
-          <button className="p-2 hover:bg-gray-100 rounded-full">
-            <Save className="w-6 h-6" />
+          <h1 className="flex-1 text-center text-2xl font-semibold text-zinc-100">New Task</h1>
+          <button className="p-2 hover:bg-zinc-800 rounded-full">
+            <Save className="w-6 h-6 text-zinc-400" />
           </button>
         </header>
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
           {/* Left Column - Main Form */}
-          <div className="lg:col-span-8 bg-white rounded-xl p-6 shadow-sm">
+          <div className="lg:col-span-8 bg-zinc-900 rounded-xl p-6 border border-zinc-800">
             {/* Timeframe Selection */}
             <div className="flex space-x-4 mb-6">
               {['today', 'this week', 'long term'].map((option) => (
@@ -343,8 +341,8 @@ const FeedPage = () => {
                   className={`
                   px-4 py-2 rounded-full text-sm font-medium
                   ${timeframe === option
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}
                 `}
                 >
                   {option.charAt(0).toUpperCase() + option.slice(1)}
@@ -355,23 +353,29 @@ const FeedPage = () => {
             {/* Title & Description */}
             <div className="space-y-6 mb-8">
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">Title</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                   placeholder="What do you want to achieve?"
                 />
                 {aiTypingSuggestion && (
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 mt-8">
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400 mt-8">
                     {aiTypingSuggestion}
                   </div>
                 )}
+                <button
+                  onClick={handleRefineTitle}
+                  className="absolute right-0 top-0 mt-8 mr-2 p-2 bg-violet-600 text-white rounded-lg hover:bg-violet-500"
+                >
+                  Refine Title
+                </button>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">Description *</label>
                 <textarea
                   value={description}
                   onChange={(e) => {
@@ -380,16 +384,22 @@ const FeedPage = () => {
                   }}
                   className={`
                   w-full px-4 py-3 rounded-lg border 
-                  ${showRequiredField ? 'border-red-300 ring-1 ring-red-300' : 'border-gray-200'} 
-                  focus:ring-2 focus:ring-blue-500 focus:border-transparent h-32
+                  ${showRequiredField ? 'border-red-400 ring-1 ring-red-400' : 'border-zinc-800'} 
+                  bg-zinc-950 text-zinc-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent h-32
                 `}
                   placeholder="Describe your task (required)"
                 />
+                <button
+                  onClick={handleRefineDescription}
+                  className="mt-2 p-2 bg-violet-600 text-white rounded-lg hover:bg-violet-500"
+                >
+                  Refine Description
+                </button>
                 {showRequiredField && (
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="mt-2 text-sm text-red-600"
+                    className="mt-2 text-sm text-red-400"
                   >
                     Please provide at least a brief description
                   </motion.p>
@@ -399,17 +409,17 @@ const FeedPage = () => {
 
             {/* Date Selection */}
             <div className="mb-8">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Deadline</label>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">Deadline</label>
               <button
                 onClick={() => setShowCalendar(true)}
-                className="w-full flex items-center justify-between px-4 py-3 border border-gray-200 rounded-lg hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full flex items-center justify-between px-4 py-3 border border-zinc-800 rounded-lg bg-zinc-950 text-zinc-100 hover:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
               >
                 <span>{selectedDate.toLocaleDateString('en-US', {
                   weekday: 'short',
                   month: 'short',
                   day: 'numeric'
                 })}</span>
-                <Calendar className="w-5 h-5 text-gray-400" />
+                <Calendar className="w-5 h-5 text-zinc-400" />
               </button>
             </div>
 
@@ -428,28 +438,28 @@ const FeedPage = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100"
+                  className="bg-zinc-900 rounded-xl p-6 border border-zinc-800"
                 >
                   <div className="flex items-center mb-4">
-                    <Brain className="w-6 h-6 text-blue-600 mr-2" />
-                    <h2 className="text-lg font-semibold text-gray-800">AI Insights</h2>
+                    <Brain className="w-6 h-6 text-violet-400 mr-2" />
+                    <h2 className="text-lg font-semibold text-zinc-100">AI Insights</h2>
                   </div>
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-zinc-400">
                       Based on your task description, here are some insights:
                     </p>
                     <ul className="space-y-3">
                       <li className="flex items-center space-x-2 text-sm">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full" />
-                        <span>This task typically takes 3-5 days to complete</span>
+                        <span className="w-2 h-2 bg-violet-400 rounded-full" />
+                        <span className="text-zinc-400">This task typically takes 3-5 days to complete</span>
                       </li>
                       <li className="flex items-center space-x-2 text-sm">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full" />
-                        <span>Consider breaking it into smaller milestones</span>
+                        <span className="w-2 h-2 bg-violet-400 rounded-full" />
+                        <span className="text-zinc-400">Consider breaking it into smaller milestones</span>
                       </li>
                       <li className="flex items-center space-x-2 text-sm">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full" />
-                        <span>Similar tasks often require team collaboration</span>
+                        <span className="w-2 h-2 bg-violet-400 rounded-full" />
+                        <span className="text-zinc-400">Similar tasks often require team collaboration</span>
                       </li>
                     </ul>
                   </div>
@@ -464,8 +474,6 @@ const FeedPage = () => {
       <AnimatePresence>
         {showCalendar && isMobile && (
           <motion.div
-
-
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -487,16 +495,10 @@ const FeedPage = () => {
 
       {/* Floating Action Button */}
       <motion.button
-        className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+        className="fixed bottom-6 right-6 bg-violet-600 text-white p-4 rounded-full shadow-lg hover:bg-violet-500 transition-colors"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => {
-          if (!description.trim()) {
-            setShowRequiredField(true);
-            return;
-          }
-          // Handle save logic here
-        }}
+        onClick={handleFormSubmit}
       >
         <Check className="w-6 h-6" />
       </motion.button>
@@ -508,7 +510,7 @@ const FeedPage = () => {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-red-50 border border-red-200 text-red-800 px-6 py-3 rounded-lg shadow-lg"
+            className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-red-600/20 border border-red-600 text-red-400 px-6 py-3 rounded-lg shadow-lg"
           >
             Please fill in the required description field
           </motion.div>
@@ -522,7 +524,7 @@ const FeedPage = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-4 right-4 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-lg shadow-sm"
+            className="fixed top-4 right-4 bg-zinc-900 border border-zinc-800 text-zinc-400 px-4 py-2 rounded-lg shadow-sm"
           >
             <div className="flex items-center space-x-2">
               <Brain className="w-4 h-4" />
@@ -540,18 +542,18 @@ const FeedPage = () => {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 50 }}
-              className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 transition-colors"
+              className="bg-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-800 transition-colors"
             >
-              <Brain className="w-6 h-6 text-blue-600" />
+              <Brain className="w-6 h-6 text-violet-400" />
             </motion.button>
           )}
         </AnimatePresence>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 transition-colors"
+          className="bg-zinc-900 p-3 rounded-full shadow-lg hover:bg-zinc-800 transition-colors"
         >
-          <Calendar className="w-6 h-6 text-gray-600" />
+          <Calendar className="w-6 h-6 text-zinc-400" />
         </motion.button>
       </div>
     </div>
