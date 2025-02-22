@@ -23,8 +23,8 @@ const App = () => (
         <Route path="/task/:id" element={<TaskForm />} />
       </Route>
 
-      {/* Catch-all route */}
-      <Route path="*" element={<Navigate to="/home" replace />} />
+      {/* Catch-all route redirects to login */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   </Router>
 );
