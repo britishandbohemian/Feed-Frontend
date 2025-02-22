@@ -10,8 +10,19 @@ import ProtectedRoute from './utils/ProtectedRoutes';
 const App = () => (
   <Router>
     <Routes>
+      {/* Initial redirect */}
+      <Route
+        path="/"
+        element={
+          localStorage.getItem('token') ? (
+            <Navigate to="/home" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
       {/* Public routes */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/verify-otp" element={<VerifyOTP />} />
@@ -24,7 +35,16 @@ const App = () => (
       </Route>
 
       {/* Catch-all route */}
-      <Route path="*" element={<Navigate to="/home" replace />} />
+      <Route
+        path="*"
+        element={
+          localStorage.getItem('token') ? (
+            <Navigate to="/home" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
     </Routes>
   </Router>
 );

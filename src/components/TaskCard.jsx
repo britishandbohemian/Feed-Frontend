@@ -1,9 +1,8 @@
-// src/components/TaskCard.jsx
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, MoreHorizontal, Circle, ChevronDown, ChevronUp } from 'lucide-react';
 
-const TaskCard = ({ task, onToggle, onDelete }) => {
+const TaskCard = ({ task, onToggle, onDelete, onClick }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { _id, title, description, steps = [], dueDate, completed } = task;
 
@@ -32,7 +31,8 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       whileHover={{ scale: 1.02 }}
-      className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 hover:border-violet-500/50 transition-all"
+      className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 hover:border-violet-500/50 transition-all cursor-pointer"
+      onClick={onClick}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-4 flex-1">
@@ -54,7 +54,7 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
               <div className="flex items-center justify-between">
                 <h3 className={`font-medium ${completed ? 'text-zinc-500 line-through' : 'text-zinc-100'}`}>
                   {title}
-                </h3>
+                </h3>                
                 {steps.length > 0 && (
                   <button className="p-1 hover:bg-zinc-800 rounded-full">
                     {isExpanded ? (
@@ -113,7 +113,10 @@ const TaskCard = ({ task, onToggle, onDelete }) => {
         <div className="relative">
           <button 
             className="p-1 hover:bg-zinc-800 rounded-full"
-            onClick={() => onDelete?.(task)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(task);
+            }}
           >
             <MoreHorizontal className="h-5 w-5 text-zinc-400" />
           </button>
