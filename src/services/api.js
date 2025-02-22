@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://feed-api-7rj8.onrender.com/api';
 
 // ✅ Function to get the auth token
 const getAuthToken = () => localStorage.getItem('token');
