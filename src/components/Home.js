@@ -32,28 +32,51 @@ const Home = () => {
   // In Home.js - Updated useEffect for fetching tasks
   // Update the useEffect to handle the backend response correctly
   useEffect(() => {
+    // Update your fetchUserTasks function in useEffect
     const fetchUserTasks = async () => {
       try {
-        setLoading(true);
+        if (!user) {
+          setError('Authentication required');
+          navigate('/login');
+          return;
+        }
+
         const response = await fetchTasks();
 
-        // Handle different response structures
-        const receivedTasks = response.data?.data || response.data;
-
-        if (Array.isArray(receivedTasks)) {
-          setTasks(receivedTasks);
+        // Check for successful response structure
+        if (response && response.success && Array.isArray(response.data)) {
+          setTasks(response.data);
+          setFilteredTasks(response.data);
         } else {
-          setError('Invalid tasks format received');
+          setError('Invalid tasks format received from server');
           setTasks([]);
+          setFilteredTasks([]);
         }
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to load tasks');
+        setError(err?.response?.data?.message || 'Failed to load tasks');
         setTasks([]);
+        setFilteredTasks([]);
       } finally {
         setLoading(false);
       }
     };
 
+    // Update your TaskCard component usage
+    {
+      filteredTasks.map(task => (
+        <TaskCard
+          key={task._id}
+          task={{
+            ...task,
+            dueDate: formatDate(task.dueDate),
+            ownerName: task.owner.username
+          }}
+          onToggle={handleTaskToggle}
+          onDelete={handleTaskDelete}
+          onClick={() => handleTaskClick(task)}
+        />
+      ))
+    }
     fetchUserTasks();
   }, [navigate, user]);// Add user to dependency array
   // ✅ Logout function
