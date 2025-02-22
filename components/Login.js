@@ -37,6 +37,21 @@ const Login = () => {
     checkApiConnectivity();
   }, []);
 
+  // Ensure localStorage data is valid before parsing
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      const user = storedUser ? JSON.parse(storedUser) : null;
+
+      if (user) {
+        setIsVerified(user.isEmailVerified);
+        const from = location.state?.from?.pathname || "/home";
+        navigate(from, { replace: true });
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+    }
+  }, [navigate, location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,20 +62,19 @@ const Login = () => {
     try {
       const response = await loginUser(formData);
 
-      // Corrected response structure handling
-      if (response.data) {
-        const userData = response.data.user;
-        const token = response.data.token;
+      if (response?.data?.data) {
+        const userData = response.data.data;
+        const token = userData.token; // Extract token
 
         if (token) {
           localStorage.setItem('user', JSON.stringify(userData));
-          localStorage.setItem('token', token);
+          localStorage.setItem('token', token); // Save token
 
           if (!userData.isEmailVerified) {
             setIsVerified(false);
             setError('Your email is not verified. Please verify your account.');
           } else {
-            navigate('/home'); // This should now execute properly
+            navigate('/home');
           }
         } else {
           setError('Authorization token is missing.');
