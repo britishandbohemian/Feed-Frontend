@@ -12,7 +12,7 @@ const Login = () => {
   const [isVerified, setIsVerified] = useState(true);
   const [showLoadingBar, setShowLoadingBar] = useState(false);
   const [isApiConnected, setIsApiConnected] = useState(false); // State for API connectivity
-  const API_URL = 'https://orange-parakeet-wg447765vj6h5qp7-5000.app.github.dev';
+  const API_URL = 'https://feed-api-7rj8.onrender.com';
 
   // Check API connectivity when the component mounts
   useEffect(() => {

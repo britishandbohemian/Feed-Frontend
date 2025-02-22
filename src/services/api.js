@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://feed-api-git-main-britishandbohemians-projects.vercel.app/api';
+const API_BASE_URL = 'whttps://feed-api-7rj8.onrender.com//api';
 
 // ✅ Function to get the auth token
 const getAuthToken = () => localStorage.getItem('token');
