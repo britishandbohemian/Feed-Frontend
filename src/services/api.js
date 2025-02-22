@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://orange-parakeet-wg447765vj6h5qp7-5000.app.github.dev/api';
+const API_BASE_URL = 'https://feed-api.vercel.app/api';
 
 // ✅ Function to get the auth token
 const getAuthToken = () => localStorage.getItem('token');
