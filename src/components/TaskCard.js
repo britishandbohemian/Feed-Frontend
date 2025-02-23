@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MoreHorizontal, Circle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Clock, MoreHorizontal, Circle, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 
-const TaskCard = ({ task, onToggle, onDelete, onClick }) => {
+const TaskCard = React.forwardRef(({ task, onToggle, onDelete, onClick }, ref) => {
+    console.log('TaskCard - Task:', task); // Debugging: Log the task object
     const [isExpanded, setIsExpanded] = useState(false);
     const { _id, title, description, steps = [], dueDate, completed } = task;
 
     const formatDate = (dateString) => {
-        if (!dateString) return 'No due date';
+        if (!dateString || isNaN(new Date(dateString).getTime())) {
+            return 'No due date';
+        }
         const date = new Date(dateString);
         const day = date.getDate();
         const getDateSuffix = (d) => {
@@ -24,14 +27,25 @@ const TaskCard = ({ task, onToggle, onDelete, onClick }) => {
         return `${day}${suffix} ${month}`;
     };
 
+    const getMandatoryStepsCount = () => {
+        return steps.filter(step => step.mandatory).length;
+    };
+
+    const isOverdue = (date) => {
+        if (!date) return false;
+        return new Date(date) < new Date();
+    };
+
     return (
         <motion.div
+            ref={ref}
             layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             whileHover={{ scale: 1.02 }}
-            className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 hover:border-violet-500/50 transition-all cursor-pointer"
+            className={`bg-zinc-900 rounded-xl p-4 border ${isOverdue(dueDate) ? 'border-red-500/50' : 'border-zinc-800'
+                } hover:border-violet-500/50 transition-all cursor-pointer`}
             onClick={onClick}
         >
             <div className="flex items-start justify-between">
@@ -39,8 +53,11 @@ const TaskCard = ({ task, onToggle, onDelete, onClick }) => {
                     <div className="mt-1">
                         <input
                             type="checkbox"
-                            checked={completed}
-                            onChange={(e) => onToggle?.(task, e.target.checked)}
+                            checked={completed || false}
+                            onChange={(e) => {
+                                e.stopPropagation();
+                                onToggle?.(task, e.target.checked);
+                            }}
                             className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 checked:bg-violet-600 
                         transition-colors duration-200 cursor-pointer"
                         />
@@ -49,12 +66,20 @@ const TaskCard = ({ task, onToggle, onDelete, onClick }) => {
                     <div className="flex-1">
                         <div
                             className="cursor-pointer"
-                            onClick={() => setIsExpanded(!isExpanded)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsExpanded(!isExpanded);
+                            }}
                         >
                             <div className="flex items-center justify-between">
-                                <h3 className={`font-medium ${completed ? 'text-zinc-500 line-through' : 'text-zinc-100'}`}>
-                                    {title}
-                                </h3>
+                                <div className="flex items-center gap-2">
+                                    <h3 className={`font-medium ${completed ? 'text-zinc-500 line-through' : 'text-zinc-100'}`}>
+                                        {title || 'Untitled Task'}
+                                    </h3>
+                                    {isOverdue(dueDate) && !completed && (
+                                        <AlertCircle className="h-4 w-4 text-red-500" />
+                                    )}
+                                </div>
                                 {steps.length > 0 && (
                                     <button className="p-1 hover:bg-zinc-800 rounded-full">
                                         {isExpanded ? (
@@ -88,8 +113,18 @@ const TaskCard = ({ task, onToggle, onDelete, onClick }) => {
                                             transition={{ delay: index * 0.1 }}
                                             className="flex items-center gap-2 text-zinc-400"
                                         >
-                                            <Circle className="w-3 h-3" />
-                                            <span className="text-sm">{step.title}</span>
+                                            <Circle className={`w-3 h-3 ${step.mandatory ? 'text-violet-500' : ''}`} />
+                                            <span className="text-sm">{step.title || 'Untitled Step'}</span>
+                                            {step.mandatory && (
+                                                <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded">
+                                                    Required
+                                                </span>
+                                            )}
+                                            {step.deadline && (
+                                                <span className="text-xs text-zinc-500">
+                                                    Due: {formatDate(step.deadline)}
+                                                </span>
+                                            )}
                                         </motion.div>
                                     ))}
                                 </motion.div>
@@ -98,12 +133,14 @@ const TaskCard = ({ task, onToggle, onDelete, onClick }) => {
 
                         <div className="flex items-center gap-3 mt-3 text-zinc-400">
                             <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4" />
-                                <span className="text-sm">{formatDate(dueDate)}</span>
+                                <Clock className={`h-4 w-4 ${isOverdue(dueDate) && !completed ? 'text-red-500' : ''}`} />
+                                <span className={`text-sm ${isOverdue(dueDate) && !completed ? 'text-red-500' : ''}`}>
+                                    {formatDate(dueDate)}
+                                </span>
                             </div>
                             {steps.length > 0 && (
                                 <span className="text-sm">
-                                    {steps.length} step{steps.length !== 1 ? 's' : ''}
+                                    {getMandatoryStepsCount()} required / {steps.length} total steps
                                 </span>
                             )}
                         </div>
@@ -124,6 +161,6 @@ const TaskCard = ({ task, onToggle, onDelete, onClick }) => {
             </div>
         </motion.div>
     );
-};
+});
 
 export default TaskCard;
