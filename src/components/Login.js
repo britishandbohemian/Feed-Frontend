@@ -12,7 +12,8 @@ const Login = () => {
   const [isVerified, setIsVerified] = useState(true);
   const [showLoadingBar, setShowLoadingBar] = useState(false);
   const [isApiConnected, setIsApiConnected] = useState(false); // State for API connectivity
-  const API_URL = 'https://feed-api-7rj8.onrender.com';
+  //const API_URL = 'https://feed-api-7rj8.onrender.com';
+  const API_URL = 'http://localhost:5000';
 
   // Check API connectivity when the component mounts
   useEffect(() => {
@@ -33,7 +34,7 @@ const Login = () => {
         setIsApiConnected(false); // API is not reachable
       }
     };
-  
+
     checkApiConnectivity();
   }, []);
 

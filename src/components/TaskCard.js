@@ -1,166 +1,100 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MoreHorizontal, Circle, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { Clock, MoreHorizontal, Circle, ChevronDown, ChevronUp, AlertCircle, Edit } from 'lucide-react';
 
-const TaskCard = React.forwardRef(({ task, onToggle, onDelete, onClick }, ref) => {
-    console.log('TaskCard - Task:', task); // Debugging: Log the task object
+
+const TaskCard = ({ task, onToggle, onDelete, onClick, onEdit }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const { _id, title, description, steps = [], dueDate, completed } = task;
+    const { title, description, steps = [], dueDate, completed } = task;
 
     const formatDate = (dateString) => {
-        if (!dateString || isNaN(new Date(dateString).getTime())) {
-            return 'No due date';
-        }
-        const date = new Date(dateString);
-        const day = date.getDate();
-        const getDateSuffix = (d) => {
-            if (d > 3 && d < 21) return 'th';
-            switch (d % 10) {
-                case 1: return 'st';
-                case 2: return 'nd';
-                case 3: return 'rd';
-                default: return 'th';
-            }
-        };
-        const suffix = getDateSuffix(day);
-        const month = date.toLocaleString('default', { month: 'long' });
-        return `${day}${suffix} ${month}`;
+        if (!dateString || isNaN(new Date(dateString))) return 'No due date';
+        return new Date(dateString).toLocaleDateString();
     };
 
-    const getMandatoryStepsCount = () => {
-        return steps.filter(step => step.mandatory).length;
-    };
-
-    const isOverdue = (date) => {
-        if (!date) return false;
-        return new Date(date) < new Date();
-    };
+    const isOverdue = (date) => date && new Date(date) < new Date();
 
     return (
-        <motion.div
-            ref={ref}
-            layout
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            whileHover={{ scale: 1.02 }}
-            className={`bg-zinc-900 rounded-xl p-4 border ${isOverdue(dueDate) ? 'border-red-500/50' : 'border-zinc-800'
-                } hover:border-violet-500/50 transition-all cursor-pointer`}
+        <div
+            className={`task-card ${isOverdue(dueDate) ? 'overdue' : ''}`}
             onClick={onClick}
         >
-            <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4 flex-1">
-                    <div className="mt-1">
-                        <input
-                            type="checkbox"
-                            checked={completed || false}
-                            onChange={(e) => {
-                                e.stopPropagation();
-                                onToggle?.(task, e.target.checked);
-                            }}
-                            className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 checked:bg-violet-600 
-                        transition-colors duration-200 cursor-pointer"
-                        />
+            <div className="card-header">
+                <div className="checkbox-container">
+                    <input
+                        type="checkbox"
+                        checked={completed}
+                        onChange={(e) => {
+                            e.stopPropagation();
+                            onToggle?.(task, e.target.checked);
+                        }}
+                    />
+                </div>
+
+                <div className="task-main">
+                    <div className="task-header">
+                        <h3 className={`task-title ${completed ? 'completed' : ''}`}>
+                            {title || 'Untitled Task'}
+                            {isOverdue(dueDate) && !completed && <AlertCircle className="alert-icon" />}
+                        </h3>
+                        {steps.length > 0 && (
+                            <button
+                                className="expand-button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsExpanded(!isExpanded);
+                                }}
+                            >
+                                {isExpanded ? <ChevronUp /> : <ChevronDown />}
+                            </button>
+                        )}
                     </div>
 
-                    <div className="flex-1">
-                        <div
-                            className="cursor-pointer"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsExpanded(!isExpanded);
-                            }}
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <h3 className={`font-medium ${completed ? 'text-zinc-500 line-through' : 'text-zinc-100'}`}>
-                                        {title || 'Untitled Task'}
-                                    </h3>
-                                    {isOverdue(dueDate) && !completed && (
-                                        <AlertCircle className="h-4 w-4 text-red-500" />
-                                    )}
-                                </div>
-                                {steps.length > 0 && (
-                                    <button className="p-1 hover:bg-zinc-800 rounded-full">
-                                        {isExpanded ? (
-                                            <ChevronUp className="h-4 w-4 text-zinc-400" />
-                                        ) : (
-                                            <ChevronDown className="h-4 w-4 text-zinc-400" />
-                                        )}
-                                    </button>
-                                )}
+                    {description && <p className="task-description">{description}</p>}
+
+                    <div className={`steps-container ${isExpanded ? 'expanded' : ''}`}>
+                        {steps.map((step, index) => (
+                            <div
+                                key={index}
+                                className="step-item"
+                                style={{ transitionDelay: `${index * 0.1}s` }}
+                            >
+                                <Circle className={`step-icon ${step.mandatory ? 'mandatory' : ''}`} />
+                                <span className="step-title">{step.title || 'Untitled Step'}</span>
+                                {step.mandatory && <span className="mandatory-badge">Required</span>}
+                                {step.deadline && <span className="step-deadline">Due: {formatDate(step.deadline)}</span>}
                             </div>
+                        ))}
+                    </div>
 
-                            {description && (
-                                <p className="text-sm text-zinc-500 mt-1">{description}</p>
-                            )}
-                        </div>
-
-                        <AnimatePresence>
-                            {isExpanded && steps.length > 0 && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="mt-3 space-y-2 overflow-hidden"
-                                >
-                                    {steps.map((step, index) => (
-                                        <motion.div
-                                            key={index}
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: index * 0.1 }}
-                                            className="flex items-center gap-2 text-zinc-400"
-                                        >
-                                            <Circle className={`w-3 h-3 ${step.mandatory ? 'text-violet-500' : ''}`} />
-                                            <span className="text-sm">{step.title || 'Untitled Step'}</span>
-                                            {step.mandatory && (
-                                                <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded">
-                                                    Required
-                                                </span>
-                                            )}
-                                            {step.deadline && (
-                                                <span className="text-xs text-zinc-500">
-                                                    Due: {formatDate(step.deadline)}
-                                                </span>
-                                            )}
-                                        </motion.div>
-                                    ))}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <div className="flex items-center gap-3 mt-3 text-zinc-400">
-                            <div className="flex items-center gap-2">
-                                <Clock className={`h-4 w-4 ${isOverdue(dueDate) && !completed ? 'text-red-500' : ''}`} />
-                                <span className={`text-sm ${isOverdue(dueDate) && !completed ? 'text-red-500' : ''}`}>
-                                    {formatDate(dueDate)}
-                                </span>
-                            </div>
-                            {steps.length > 0 && (
-                                <span className="text-sm">
-                                    {getMandatoryStepsCount()} required / {steps.length} total steps
-                                </span>
-                            )}
-                        </div>
+                    <div className="due-date">
+                        <Clock className={`due-icon ${isOverdue(dueDate) ? 'overdue' : ''}`} />
+                        <span>{formatDate(dueDate)}</span>
                     </div>
                 </div>
 
-                <div className="relative">
+                <div className="task-actions">
                     <button
-                        className="p-1 hover:bg-zinc-800 rounded-full"
+                        className="edit-button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit?.(task);
+                        }}
+                    >
+                        <Edit />
+                    </button>
+                    <button
+                        className="delete-button"
                         onClick={(e) => {
                             e.stopPropagation();
                             onDelete?.(task);
                         }}
                     >
-                        <MoreHorizontal className="h-5 w-5 text-zinc-400" />
+                        <MoreHorizontal />
                     </button>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
-});
+};
 
 export default TaskCard;
