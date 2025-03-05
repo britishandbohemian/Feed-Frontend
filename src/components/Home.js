@@ -1,7 +1,8 @@
 // Home.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, LogOut, Edit, Trash2, Check } from 'lucide-react';
+import { Plus, LogOut, Edit, Trash2 } from 'lucide-react';
+import { fetchTasks, deleteTask, updateTask } from './api';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ const Home = () => {
   const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const getTasks = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -19,23 +20,9 @@ const Home = () => {
           return;
         }
 
-        const response = await fetch('https://feed-api-7rj8.onrender.com/api/tasks', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            localStorage.removeItem('token');
-            navigate('/login');
-            return;
-          }
-          throw new Error('Failed to fetch tasks');
-        }
-
-        const data = await response.json();
-        setTasks(data.data || []);
+        setLoading(true);
+        const result = await fetchTasks();
+        setTasks(result.data || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -43,22 +30,14 @@ const Home = () => {
       }
     };
 
-    fetchTasks();
+    getTasks();
   }, [refresh, navigate]);
 
   const handleDelete = async (taskId) => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://feed-api-7rj8.onrender.com/api/tasks/${taskId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error('Failed to delete task');
+      await deleteTask(taskId);
       setRefresh(prev => !prev);
     } catch (error) {
       setError(error.message);
@@ -67,17 +46,7 @@ const Home = () => {
 
   const handleToggleComplete = async (taskId, currentStatus) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://feed-api-7rj8.onrender.com/api/tasks/${taskId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ completed: !currentStatus }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update task status');
+      await updateTask(taskId, { completed: !currentStatus });
       setRefresh(prev => !prev);
     } catch (error) {
       setError(error.message);
