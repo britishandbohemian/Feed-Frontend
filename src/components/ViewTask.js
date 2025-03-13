@@ -9,9 +9,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { createTask } from '../services/api';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { config } from '../config/config';
 
-const GEMINI_API_KEY = "AIzaSyCppG9ocImc1e3HBsDeCZJWaL9IDm9wg2Q";
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
 
 const FeedPage = () => {
   const navigate = useNavigate();
@@ -29,7 +29,12 @@ const FeedPage = () => {
 
   // Refine title and description using Gemini AI
   const makeTextConcise = async (text) => {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    if (!config.gemini.apiKey) {
+      console.error('Gemini API key not configured');
+      return text;
+    }
+
+    const model = genAI.getGenerativeModel({ model: config.gemini.model });
     const prompt = `Make the following text more concise, clear, and grammatically correct: "${text}"`;
 
     try {

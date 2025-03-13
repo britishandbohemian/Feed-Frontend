@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, MoreHorizontal, Circle, ChevronDown, ChevronUp, AlertCircle, Edit } from 'lucide-react';
 
-
 const TaskCard = ({ task, onToggle, onDelete, onClick, onEdit }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { title, description, steps = [], dueDate, completed } = task;
@@ -11,87 +10,116 @@ const TaskCard = ({ task, onToggle, onDelete, onClick, onEdit }) => {
         return new Date(dateString).toLocaleDateString();
     };
 
+    const formatTime = (dateString) => {
+        if (!dateString || isNaN(new Date(dateString))) return '';
+        return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
     const isOverdue = (date) => date && new Date(date) < new Date();
 
     return (
-        <div
-            className={`task-card ${isOverdue(dueDate) ? 'overdue' : ''}`}
-            onClick={onClick}
-        >
-            <div className="card-header">
-                <div className="checkbox-container">
-                    <input
-                        type="checkbox"
-                        checked={completed}
-                        onChange={(e) => {
-                            e.stopPropagation();
-                            onToggle?.(task, e.target.checked);
-                        }}
-                    />
-                </div>
-
-                <div className="task-main">
-                    <div className="task-header">
-                        <h3 className={`task-title ${completed ? 'completed' : ''}`}>
-                            {title || 'Untitled Task'}
-                            {isOverdue(dueDate) && !completed && <AlertCircle className="alert-icon" />}
-                        </h3>
-                        {steps.length > 0 && (
-                            <button
-                                className="expand-button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsExpanded(!isExpanded);
-                                }}
-                            >
-                                {isExpanded ? <ChevronUp /> : <ChevronDown />}
-                            </button>
+        <div className="task-card">
+            <div className="task-header">
+                <div>
+                    <h3 className="task-title">
+                        {title || 'Untitled Task'}
+                        {isOverdue(dueDate) && !completed && (
+                            <AlertCircle className="inline-block ml-2 text-red-400" size={16} />
                         )}
-                    </div>
-
+                    </h3>
                     {description && <p className="task-description">{description}</p>}
-
-                    <div className={`steps-container ${isExpanded ? 'expanded' : ''}`}>
-                        {steps.map((step, index) => (
-                            <div
-                                key={index}
-                                className="step-item"
-                                style={{ transitionDelay: `${index * 0.1}s` }}
-                            >
-                                <Circle className={`step-icon ${step.mandatory ? 'mandatory' : ''}`} />
-                                <span className="step-title">{step.title || 'Untitled Step'}</span>
-                                {step.mandatory && <span className="mandatory-badge">Required</span>}
-                                {step.deadline && <span className="step-deadline">Due: {formatDate(step.deadline)}</span>}
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="due-date">
-                        <Clock className={`due-icon ${isOverdue(dueDate) ? 'overdue' : ''}`} />
-                        <span>{formatDate(dueDate)}</span>
+                    
+                    <div className="task-time">
+                        <Clock size={14} />
+                        <span>{formatTime(dueDate)} - {formatTime(dueDate)}</span>
                     </div>
                 </div>
-
-                <div className="task-actions">
-                    <button
-                        className="edit-button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit?.(task);
-                        }}
-                    >
-                        <Edit />
-                    </button>
-                    <button
-                        className="delete-button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete?.(task);
-                        }}
-                    >
-                        <MoreHorizontal />
-                    </button>
+                
+                <div className="task-priority">
+                    High Priority
                 </div>
+            </div>
+            
+            {/* Team Members */}
+            <div className="task-members">
+                <div className="member-avatars">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="member-avatar">
+                            {i}
+                        </div>
+                    ))}
+                </div>
+                <div className="member-count">
+                    <span>3</span>
+                    <span className="ml-1">In team</span>
+                </div>
+            </div>
+            
+            {/* Status Badge */}
+            <div className="task-status">
+                Work In Progress
+            </div>
+
+            {steps.length > 0 && (
+                <div className="mt-3">
+                    <button
+                        className="flex items-center text-gray-400 text-xs"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsExpanded(!isExpanded);
+                        }}
+                    >
+                        {isExpanded ? (
+                            <>
+                                <ChevronUp size={14} className="mr-1" /> Hide Steps
+                            </>
+                        ) : (
+                            <>
+                                <ChevronDown size={14} className="mr-1" /> Show Steps ({steps.length})
+                            </>
+                        )}
+                    </button>
+                    
+                    {isExpanded && (
+                        <div className="mt-2 space-y-2 pl-2 border-l-2 border-gray-700">
+                            {steps.map((step, index) => (
+                                <div
+                                    key={index}
+                                    className="flex items-start text-sm"
+                                >
+                                    <Circle className={`mr-2 ${step.mandatory ? 'text-violet-400' : 'text-gray-500'}`} size={14} />
+                                    <div>
+                                        <span className="text-gray-300">{step.title || 'Untitled Step'}</span>
+                                        {step.mandatory && (
+                                            <span className="ml-2 text-xs bg-violet-900 text-violet-300 px-1 rounded">Required</span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            <div className="task-actions">
+                <button
+                    className="action-button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit?.(task);
+                    }}
+                >
+                    <Edit size={16} />
+                </button>
+                <button
+                    className="action-button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete?.(task);
+                    }}
+                >
+                    <MoreHorizontal size={16} />
+                </button>
             </div>
         </div>
     );

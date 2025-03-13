@@ -39,33 +39,35 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-zinc-100 font-['Poppins']">
-      <div className="w-full max-w-md p-8">
-        <div className="mb-12 text-center">
-          <h1 className="font-['Milonga'] text-5xl mb-3 text-violet-400">feed</h1>
-          <p className="text-zinc-400 text-lg">Create your account</p>
+    <div className="min-h-screen flex items-center justify-center bg-zinc-950 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8 bg-zinc-900/50 p-8 rounded-2xl border border-zinc-800/50 backdrop-blur-sm">
+        <div className="text-center">
+          <h1 className="font-['Milonga'] text-6xl mb-4 text-violet-400 animate-fade-in">feed</h1>
+          <p className="text-zinc-400 text-lg font-light">Create your account</p>
         </div>
 
         {error && (
-          <div className="p-4 mb-6 text-sm text-red-200 rounded-lg bg-red-950 border border-red-800">
+          <div className="p-4 text-sm text-red-200 rounded-lg bg-red-950/50 border border-red-800/50 backdrop-blur-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
+              name="firstName"
               placeholder="First Name"
-              className="w-full p-4 bg-zinc-900 rounded-xl border-2 border-zinc-800 placeholder-zinc-500 focus:border-violet-500 focus:outline-none transition-colors duration-200"
+              className="w-full p-4 bg-transparent border-b-2 border-violet-500 placeholder-zinc-500 text-zinc-100 focus:outline-none focus:border-violet-400 font-['Poppins']"
               value={formData.firstName}
               onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
               required
             />
             <input
               type="text"
+              name="lastName"
               placeholder="Last Name"
-              className="w-full p-4 bg-zinc-900 rounded-xl border-2 border-zinc-800 placeholder-zinc-500 focus:border-violet-500 focus:outline-none transition-colors duration-200"
+              className="w-full p-4 bg-transparent border-b-2 border-violet-500 placeholder-zinc-500 text-zinc-100 focus:outline-none focus:border-violet-400 font-['Poppins']"
               value={formData.lastName}
               onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
               required
@@ -74,8 +76,9 @@ const SignUp = () => {
 
           <input
             type="email"
+            name="email"
             placeholder="Email"
-            className="w-full p-4 bg-zinc-900 rounded-xl border-2 border-zinc-800 placeholder-zinc-500 focus:border-violet-500 focus:outline-none transition-colors duration-200"
+            className="w-full p-4 bg-transparent border-b-2 border-violet-500 placeholder-zinc-500 text-zinc-100 focus:outline-none focus:border-violet-400 font-['Poppins']"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
@@ -83,35 +86,30 @@ const SignUp = () => {
 
           <input
             type="password"
+            name="password"
             placeholder="Password"
-            className="w-full p-4 bg-zinc-900 rounded-xl border-2 border-zinc-800 placeholder-zinc-500 focus:border-violet-500 focus:outline-none transition-colors duration-200"
+            className="w-full p-4 bg-transparent border-b-2 border-violet-500 placeholder-zinc-500 text-zinc-100 focus:outline-none focus:border-violet-400 font-['Poppins']"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             required
             minLength={8}
           />
-          <p className="text-xs text-zinc-500">Minimum 8 characters</p>
+          <p className="text-xs text-zinc-500 pl-1">Minimum 8 characters</p>
 
           <button
             type="submit"
-            className="w-full bg-violet-600 text-white p-4 rounded-xl font-medium transition-all duration-200 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:hover:bg-violet-600 flex items-center justify-center space-x-2"
+            className="w-full bg-violet-600 text-white p-4 rounded-xl font-medium transition-all duration-200 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:hover:bg-violet-600 font-['Poppins']"
             disabled={isLoading}
           >
-            {isLoading && (
-              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            )}
-            <span>{isLoading ? 'Creating Account...' : 'Sign Up'}</span>
+            {isLoading ? 'Creating Account...' : 'Sign Up'}
           </button>
         </form>
 
-        <div className="mt-8 text-center text-zinc-400">
+        <div className="text-center text-zinc-400">
           Already have an account?{' '}
           <button
             onClick={() => navigate('/login')}
-            className="text-violet-400 font-medium hover:text-violet-300 transition-colors duration-200 focus:outline-none"
+            className="text-violet-400 font-medium hover:text-violet-300 transition-colors duration-200 focus:outline-none hover:underline"
           >
             Login
           </button>

@@ -86,7 +86,7 @@ const VerifyOTP = () => {
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-12 h-12 text-center text-lg font-medium bg-zinc-900 rounded-xl border-2 border-zinc-800 focus:border-violet-500 focus:outline-none transition-colors duration-200"
+                className="w-12 h-12 text-center text-lg font-medium bg-transparent border-b-2 border-violet-500 focus:border-violet-400 focus:outline-none transition-colors duration-200 font-['Poppins']"
               />
             ))}
           </div>

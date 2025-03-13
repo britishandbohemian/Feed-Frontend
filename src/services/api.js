@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = 'https://feed-api-7rj8.onrender.com/api';
+const GEMINI_API_KEY = 'AIzaSyAUATOXYxybxiAfTaU-4aoZ2jky2tJXUp4'; // Replace with your actual Gemini API key
 
 // ✅ Function to get the auth token
 const getAuthToken = () => localStorage.getItem('token');
@@ -14,16 +15,13 @@ const publicRoutes = ['/users/register', '/users/login', '/users/verify-otp', '/
 // ✅ Attach token ONLY for protected routes
 apiClient.interceptors.request.use(
     (config) => {
-        // Check if the request is to a public route (use `some()` for flexible checking)
         const isPublicRoute = publicRoutes.some(route => config.url.includes(route));
-
         if (!isPublicRoute) {
             const token = getAuthToken();
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }
         }
-
         return config;
     },
     (error) => Promise.reject(error)
@@ -37,7 +35,6 @@ apiClient.interceptors.response.use(
             console.warn("Unauthorized, clearing session...");
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-
             if (!['/login', '/signup', '/verify-otp'].includes(window.location.pathname)) {
                 window.location.href = "/login"; // Redirect to login
             }
@@ -73,7 +70,6 @@ export const logoutUser = async () => {
     try {
         const token = getAuthToken();
         if (!token) return; // ✅ Skip request if already logged out
-
         await apiClient.post('/users/logout');
     } catch (error) {
         console.warn("Logout failed, clearing session.");
@@ -90,10 +86,38 @@ export const getUserById = async (id) => apiClient.get(`/users/${id}`);
 export const updateUser = async (id, data) => apiClient.put(`/users/${id}`, data);
 export const deleteUser = async (id) => apiClient.delete(`/users/${id}`);
 
-
-
-// Change the task endpoints to match your backend routes
+// ✅ PROTECTED TASK ROUTES
 export const fetchTasks = async () => apiClient.get('/tasks');
 export const createTask = async (taskData) => apiClient.post('/tasks', taskData);
+export const getTaskById = async (taskId) => apiClient.get(`/tasks/${taskId}`);
 export const updateTask = async (taskId, taskData) => apiClient.put(`/tasks/${taskId}`, taskData);
 export const deleteTask = async (taskId) => apiClient.delete(`/tasks/${taskId}`);
+
+// ✅ Generate AI Steps using Gemini API
+export const generateAISteps = async (taskId, description) => {
+    try {
+        const response = await apiClient.post('/tasks/generate-steps', { taskId, description });
+
+        if (response.data?.success && Array.isArray(response.data.steps)) {
+            return response.data.steps.map(step => ({
+                title: step.description,
+                mandatory: true,
+            }));
+        } else {
+            throw new Error('Invalid response format from AI');
+        }
+    } catch (error) {
+        console.error('Error generating AI steps:', error);
+        throw new Error(error.response?.data?.message || error.message);
+    }
+};
+
+// Add this function to ensure the token is included in all requests
+const getAuthHeader = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+// ... existing code ...
+
+// ... existing code ...

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Key } from 'lucide-react';
+import { config } from '../config/config';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/users/reset-password', {
+      const response = await fetch(`${config.api.baseUrl}/api/users/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

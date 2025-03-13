@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail } from 'lucide-react';
+import { config } from '../config/config';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/users/request-password-reset', {
+      const response = await fetch(`${config.api.baseUrl}/api/users/request-password-reset`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
